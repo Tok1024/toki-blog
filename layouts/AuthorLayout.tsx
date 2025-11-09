@@ -20,7 +20,7 @@ export default function AuthorLayout({ children, content }: Props) {
           </h1>
         </div>
         <div className="flex flex-col md:flex-row md:items-start md:gap-8">
-          <div className="flex flex-col items-center md:items-start md:w-64 space-x-2 pt-8">
+          <div className="flex flex-col items-center space-x-2 pt-8 md:w-64 md:items-start">
             {avatar && (
               <Image
                 src={avatar}
@@ -41,9 +41,7 @@ export default function AuthorLayout({ children, content }: Props) {
               <SocialIcon kind="bluesky" href={bluesky} />
             </div>
           </div>
-          <div className="prose dark:prose-invert max-w-none pt-8 pb-8 flex-1">
-            {children}
-          </div>
+          <div className="prose dark:prose-invert max-w-none flex-1 pt-8 pb-8">{children}</div>
         </div>
       </div>
     </>

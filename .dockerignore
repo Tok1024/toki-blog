@@ -1,0 +1,11 @@
+.git
+.pnp.*
+.next/cache
+*.log
+dist
+node_modules
+.contentlayer
+.devcontainer
+.vscode
+.metainfo
+README.md

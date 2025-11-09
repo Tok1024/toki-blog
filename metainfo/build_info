@@ -1,0 +1,29 @@
+Route (app)                                 Size  First Load JS    
+┌ ○ /                                    1.13 kB         105 kB
+├ ○ /_not-found                            145 B         101 kB
+├ ○ /about                                 497 B         106 kB
+├ ƒ /api/newsletter                        145 B         101 kB
+├ ○ /blog                                  136 B         110 kB
+├ ● /blog/[...slug]                      4.16 kB         113 kB
+├   └ /blog/hello-world
+├ ● /blog/page/[page]                      137 B         110 kB
+├   └ /blog/page/1
+├ ○ /projects                              185 B         109 kB
+├ ○ /robots.txt                            145 B         101 kB
+├ ○ /sitemap.xml                           145 B         101 kB
+├ ○ /tags                                  172 B         104 kB
+├ ● /tags/[tag]                            137 B         110 kB
+├   └ /tags/intro
+└ ● /tags/[tag]/page/[page]                138 B         110 kB
+    └ /tags/intro/page/1
++ First Load JS shared by all             101 kB
+  ├ chunks/4bd1b696-5100ffb4d6775e5e.js  53.2 kB
+  ├ chunks/684-6c7371b10e79b1ae.js       45.3 kB
+  └ other shared chunks (total)          1.97 kB
+
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ƒ  (Dynamic)  server-rendered on demand
+
+RSS feed generated...
