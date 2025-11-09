@@ -10,9 +10,9 @@ import Tag from '@/components/Tag'
 import siteMetadata from '@/data/siteMetadata'
 import ScrollTopAndComment from '@/components/ScrollTopAndComment'
 
-const editUrl = (path) => `${siteMetadata.siteRepo}/blob/main/data/${path}`
-const discussUrl = (path) =>
-  `https://mobile.twitter.com/search?q=${encodeURIComponent(`${siteMetadata.siteUrl}/${path}`)}`
+const editUrl = (path) => `${siteMetadata.siteRepo}/tree/master/data/${path}`
+// const discussUrl = (path) =>
+//   `https://mobile.twitter.com/search?q=${encodeURIComponent(`${siteMetadata.siteUrl}/${path}`)}`
 
 const postDateTemplate: Intl.DateTimeFormatOptions = {
   weekday: 'long',
@@ -31,6 +31,7 @@ interface LayoutProps {
 
 export default function PostLayout({ content, authorDetails, next, prev, children }: LayoutProps) {
   const { filePath, path, slug, date, title, tags } = content
+  console.log(path)
   const basePath = path.split('/')[0]
 
   return (
@@ -74,8 +75,8 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
                       <dl className="text-sm leading-5 font-medium whitespace-nowrap">
                         <dt className="sr-only">Name</dt>
                         <dd className="text-gray-900 dark:text-gray-100">{author.name}</dd>
-                        <dt className="sr-only">Twitter</dt>
-                        <dd>
+                        {/* <dt className="sr-only">Twitter</dt> */}
+                        {/* <dd>
                           {author.twitter && (
                             <Link
                               href={author.twitter}
@@ -86,7 +87,7 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
                                 .replace('https://x.com/', '@')}
                             </Link>
                           )}
-                        </dd>
+                        </dd> */}
                       </dl>
                     </li>
                   ))}
@@ -96,10 +97,10 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
             <div className="divide-y divide-gray-200 xl:col-span-3 xl:row-span-2 xl:pb-0 dark:divide-gray-700">
               <div className="prose dark:prose-invert max-w-none pt-10 pb-8">{children}</div>
               <div className="pt-6 pb-6 text-sm text-gray-700 dark:text-gray-300">
-                <Link href={discussUrl(path)} rel="nofollow">
+                {/* <Link href={discussUrl(path)} rel="nofollow">
                   Discuss on Twitter
-                </Link>
-                {` • `}
+                </Link> */}
+                {/* {` • `} */}
                 <Link href={editUrl(filePath)}>View on GitHub</Link>
               </div>
               {siteMetadata.comments && (
