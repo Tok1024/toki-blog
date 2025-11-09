@@ -46,4 +46,4 @@ yarn-error.log*
 # Contentlayer
 .contentlayer
 
-.metainfo
+/metainfo
