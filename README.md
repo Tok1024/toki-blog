@@ -48,7 +48,7 @@ layout: PostLayout
 - Logo 与 Favicon：`public/logo.svg`，`app/icon.svg` 或 `public/static/favicons/*`
 
 ### 生产部署（Docker）
-已支持独立运行构建（standalone）。简要流程：
+已支持独立运行构建。简要流程：
 
 ```bash
 docker build -t toki-blog:latest .
