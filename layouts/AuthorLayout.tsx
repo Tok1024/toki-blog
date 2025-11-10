@@ -1,7 +1,10 @@
+'use client'
 import { ReactNode } from 'react'
 import type { Authors } from 'contentlayer/generated'
 import SocialIcon from '@/components/social-icons'
 import Image from '@/components/Image'
+import Comments from '@/components/Comments'
+import siteMetadata from '@/data/siteMetadata'
 
 interface Props {
   children: ReactNode
@@ -10,6 +13,16 @@ interface Props {
 
 export default function AuthorLayout({ children, content }: Props) {
   const { name, avatar, occupation, company, email, twitter, bluesky, linkedin, github } = content
+  // giscus / 评论组件需要一个字符串 slug，用于映射 Discussion
+  // 优先使用 content 提供的 slug 字段（如果 contentlayer 有），否则基于 name 生成
+  const authorSlug =
+    // @ts-ignore
+    content.slug ??
+    name
+      ?.toLowerCase()
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w-]/g, '')
 
   return (
     <>
@@ -42,6 +55,13 @@ export default function AuthorLayout({ children, content }: Props) {
             </div>
           </div>
           <div className="prose dark:prose-invert max-w-none flex-1 pt-8 pb-8">{children}</div>
+        </div>
+        <div>
+          {siteMetadata.comments && (
+            <div className="pt-6 pb-6 text-center text-gray-700 dark:text-gray-300" id="comment">
+              <Comments slug={authorSlug} />
+            </div>
+          )}
         </div>
       </div>
     </>
