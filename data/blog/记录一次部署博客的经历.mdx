@@ -1,0 +1,345 @@
+---
+title: "记录一次部署博客的经历"
+date: 2025-11-10
+lastmod: 2025-11-10
+tags: [Blog, Web开发, Nextjs]
+summary: "使用docker把nextjs博客用docker部署到云服务器"
+images: []
+draft: false
+authors: ["default"]
+layout: PostLayout
+canonicalUrl: ""
+---
+
+作为第一篇博客, 就分享一下自己部署博客的经历吧. 花了一下午+一晚上的时间在云服务器上部署了自己的 blog, 配置了域名, 完成了 github 的自动更新工作流, 真实太不容易了!!! 先看最终效果:
+
+### 成果展示
+
+主页:
+![20251109_111140_635](/static/images/first-blog/20251109_111140_635.png)
+
+简洁且美观, 非常令人舒适
+
+写博客的工作流: 在 `data/blog` 目录下写一篇笔记
+
+![20251109_111122_524](/static/images/first-blog/20251109_111122_524.png)
+
+然后 `git push`
+![20251109_111103_395](/static/images/first-blog/20251109_111103_395.png)
+
+下面就都是自动化流程了, 当我 push 之后, github 会**自动执行 action**, 更新 `ghcr.io` 中的 docker 镜像
+
+![20251109_111142_294](/static/images/first-blog/20251109_111142_294.png)
+
+然后服务器上的 docker 会**自动检测 `ghcr.io` 的镜像更新**, 拉取最新的更新并重新启动 nextjs 服务, 简直是完美!
+
+然后去查看一下内存占用情况:
+![20251110_121102_886](/static/images/first-blog/20251110_121102_886.png)
+
+这内存占用可以忽略了, 简直爽爆!
+
+## 回顾
+
+回顾整个过程真的是遇到了太多太多的问题, 但是同时也让我深刻的理解了更多知识, 下面我完整的串一遍流程
+
+- 技术栈：Next.js 15 + Contentlayer + Yarn 3（Berry）+ Docker + GHCR + Watchtower
+- 目标：Docker 化运行 Next standalone，CI 自动构建推送，服务器自动拉取并重启
+
+### 项目启动
+
+首先我拉取了 `https://github.com/timlrx/tailwind-nextjs-starter-blog` 这个模板仓库, 这是一个基于 nextjs 和 tailwind 的博客模板, 可以比较方便的获得一个框架, 并且有较高的自由度, 效果也比较美观
+
+```bash
+npx degit 'timlrx/tailwind-nextjs-starter-blog'
+```
+
+然后我们就得到了一个仓库, 接下来就按照模板的 `README` 填写一些基本的信息
+
+1. Personalize `siteMetadata.js` (site related information)
+2. Modify the content security policy in `next.config.js` if you want to use other analytics provider or a commenting solution other than giscus.
+3. Personalize `authors/default.md` (main author)
+4. Modify `projectsData.ts`
+5. Modify `headerNavLinks.ts` to customize navigation links
+6. Add blog posts
+7. Deploy on Vercel (这里我选择部署到自己的服务器上, 感觉更加安心)
+
+需要注意的是, 不同于普通的 nextjs 项目使用 `npm/pnpm` 进行包管理, 本项目使用 `yarn` 进行包管理, 同时 `node.js` 的版本最好是 20/22, 不要太高, 24 会导致报错
+
+```bash
+corepack enable # 激活yarn
+yarn dev # 运行开发版本
+# 浏览器访问 http://localhost:3000
+```
+
+### Docker 打包
+
+到目前为止都没有太大的问题, vibecoding 一路下来都非常顺利, 成功的写出了一个能看的网站. 下面需要把项目打包到 docker 镜像, 发布到 `ghcr.io`, 首先要在本地测试 `yarn build`
+
+```bash
+Route (app)                                 Size  First Load JS    
+┌ ○ /                                    1.13 kB         105 kB
+├ ○ /_not-found                            145 B         101 kB
+├ ○ /about                                 497 B         106 kB
+├ ƒ /api/newsletter                        145 B         101 kB
+├ ○ /blog                                  136 B         110 kB
+├ ● /blog/[...slug]                      4.16 kB         113 kB
+├   ├ /blog/hello-world
+├   └ /blog/test
+├ ● /blog/page/[page]                      137 B         110 kB
+├   └ /blog/page/1
+├ ○ /projects                              185 B         109 kB
+├ ○ /robots.txt                            145 B         101 kB
+├ ○ /sitemap.xml                           145 B         101 kB
+├ ○ /tags                                  172 B         104 kB
+├ ● /tags/[tag]                            137 B         110 kB
+├   ├ /tags/intro
+├   └ /tags/test
+└ ● /tags/[tag]/page/[page]                138 B         110 kB
+    ├ /tags/intro/page/1
+    └ /tags/test/page/1
++ First Load JS shared by all             101 kB
+  ├ chunks/4bd1b696-5100ffb4d6775e5e.js  53.2 kB
+  ├ chunks/684-6c7371b10e79b1ae.js       45.3 kB
+  └ other shared chunks (total)          1.97 kB
+
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ƒ  (Dynamic)  server-rendered on demand
+
+RSS feed generated...
+```
+
+可以看到我的博客渲染模式是 SSG, 代表在服务器预生成后发送到浏览器
+
+> **SSG**
+> Next.js 的 SSG（静态站点生成）是在构建阶段就预渲染出静态 HTML 文件的技术，这些文件可直接部署到 CDN，用户访问时无需服务器动态处理，能极大提升加载速度、降低服务器压力且利于 SEO，适合内容不常更新的场景（如博客、文档），其通过 `getStaticProps` 等函数在构建时获取数据并注入页面。
+
+能成功 Build 说明代码没问题, 接下来就需要开始打包成 docker 镜像了 
+
+> **打包**
+> 给应用打包指的是将**应用程序的代码、依赖库、配置文件等所有运行所需的资源**，按照特定格式或结构整合为一个或一组可分发的文件包的过程。
+> 这个过程会处理代码编译、依赖管理、资源压缩等操作，最终生成的包可以方便地在不同环境（如开发、测试、生产）中部署和运行，确保应用在不同地方能以一致的方式工作，同时简化分发和安装流程。例如前端项目可能打包成包含 HTML、CSS、JS 的静态文件包，后端应用可能打包成可执行文件或容器镜像。
+
+> **Docker** 是一个开源的容器化平台，它能让**应用程序及其依赖项**被打包到一个可移植的容器中，实现跨环境的一致性运行。简单说，就是能让应用在不同的计算机环境（比如开发机、测试服务器、生产服务器）中以相同的方式运行，解决了 **“在我这能运行，到你那却不行”** 的问题。
+   **Docker 镜像**是一个包含运行应用所需的代码、运行时环境、库、环境变量和配置文件的只读模板。它是创建 Docker 容器的基础，类似于虚拟机的镜像（但更轻量）。比如，一个镜像可以包含一个安装了 Python 和特定库的 Linux 系统，以及你的 Python 应用代码。通过这个镜像，你可以创建多个相同的容器来运行应用。
+
+首先在本地写一个 DockerfIle 文件, 相当于 docker 打包的脚本
+```dockerfile
+FROM node:22-alpine AS builder
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# 仅拷贝安装所需文件以提高缓存命中率（包括 .yarn，以使用项目内的 yarnPath=3.6.1）
+COPY package.json yarn.lock .yarnrc.yml ./
+COPY .yarn/ ./.yarn/
+
+# 使用 corepack 激活并锁定 Yarn 版本；打印 Node/Yarn 版本用于排查
+RUN corepack enable \
+	&& corepack prepare yarn@3.6.1 --activate \
+	&& node -v && yarn -v \
+	&& yarn install --immutable
+
+# 拷贝源码并构建；构建后强校验 standalone 是否生成
+COPY . .
+RUN node -v && yarn -v \
+	&& yarn build \
+	&& ( [ -f .next/standalone/server.js ] \
+			 && echo "Standalone OK" \
+			 || (echo "Standalone MISSING" && ls -al .next || true && ls -al .next/standalone || true && exit 1) )
+
+FROM node:22-alpine AS runner
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# 仅复制 standalone 运行所需文件（减小镜像并避免 Yarn 运行）
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+
+RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
+USER nextjs
+EXPOSE 3666
+ENV PORT=3666
+
+# 直接运行 standalone server，避免 Yarn 版本校验问题
+CMD ["node", "server.js"]
+```
+
+这个脚本拷打 ai 就行, 需要注意的是 `EXPOSE` 和 `ENV PORT` 分别是容器暴露的端口和容器内应用运行的端口, 宿主机和容器就靠着这个端口进行通信
+
+这里我们需要去修改一下 `next.config.js`, 让整个 nextjs 项目输出为 `standallone`, 可以减少资源消耗, 具体就是把 `output` 改成 `standalone`
+![20251110_121110_060](/static/images/first-blog/20251110_121110_060.png)
+
+然后运行命令
+```bash
+docker build -t ghcr.io/<github用户名>/<给项目起一个名字> . #后面的点别忘了
+```
+
+然后就祈祷能正常打包吧, 当然大概率是失败的, 因为这个模板就没想着让你用 docker 方便的打包, 所以有一些配置要改一下, 比如我当时一直报错说 `node_modules` 找不到, 找了很久问题, gpt 页解决不出来, 最后怀疑是容器内部 yarn 版本出了问题, 于是加入
+![20251110_121100_289](/static/images/first-blog/20251110_121100_289.png)
+
+然后还真的成功了, 发现有时候自己奇妙的直觉可能真的比 ai 强.
+
+当然如果你用的是我的脚本, 应该是没问题的, 这样我们就成功的打包好了镜像到本地, 接下来需要把本地仓库推到云端的 `ghcr.io` 供服务器部署
+
+### Docker push
+
+这一步比较简单, 去 github 上获取一个 pat, 记录下来 (别记录到仓库, 记录到自己的笔记软件), 后面本地和服务器登录都需要这个 key
+
+在本地执行
+```bash
+docker login ghcr.io
+# 按提示输入github用户名称和刚才的key就行
+
+docker push ghcr.io/<github用户名>/<项目名>:latest # 最后的是版本号
+```
+
+这样就推到远程了, 下面我们就进入服务器
+
+### 在服务器拉取镜像
+
+首先需要在服务器上安装 docker 和 docker compose, 具体命令可以去搜一下, 然后配置一下 docke
+
+```bash
+mkdir docker # 建立docker目录, 记录登录信息
+cd docker
+
+docker login ghcr.io # 用和刚才相同的方式先登录docker
+```
+
+接下来需要写一个 docker-compose 文件, 它允许你用 YAML 格式一次性声明多个关联的容器服务, 内容照抄我的就行
+```yaml
+version: "3.9"
+
+services:
+  blog:
+    image: <刚才的镜像链接>
+    container_name: blog
+    restart: unless-stopped
+    ports:
+      - "80:3666"
+    env_file:
+      - .env
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: watchtower
+    restart: unless-stopped
+    command: --interval 60 --cleanup --include-restarting --label-enable
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /root/.docker/config.json:/config.json:ro
+```
+
+然后运行命令
+```bash
+docker compose up -d
+```
+
+这就启动了两个服务, 你可能会问为啥是两个, 其实我们还启动了一个进程叫做 `watchtower`, 负责隔一段时间看看 `ghcr.io` 上的镜像有没有更新, 如果更新就拉取然后重启 nextjs 服务, 不用我每次写完笔记手动重启 (那真得累死了)
+
+### 配置 github-workflow
+
+我们的程序开发还差最后一步, 就是要在 git commit 的时候调用 github-workflow, 让 github 自动给我们打包程序并上传到 `ghcr.io`, 供 `watchtower` 检测并拉取更新, 配置也很简单, 只需要在项目的 `.github/workflow/` 写入
+
+```yml
+name: Build and Publish
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      # 关键：启用 buildx
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker-container
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: <填写你的镜像地址>
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: <你的github用户名>
+          password: ${{ secrets.GHCR_PAT }}
+
+      - name: Build & Push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=<ghcr上镜像的路径>:cache
+          cache-to: type=registry,ref=<ghcr上镜像的路径>:cache,mode=max
+```
+
+这个脚本也是花了好久 vibecoding 出来的, 需要注意的是这里还需要再申请一个 pat, 添加到 github 仓库的 secret variable 中, 名称就叫 `GHCR_PAT`, 供脚本使用
+
+![20251110_011117_748](/static/images/first-blog/20251110_011117_748.png)
+
+这样的话, 运行一次 `git commit`, 去 github 主页的 action 里就可以查看 workflow 的状况了
+
+![20251110_011134_193](/static/images/first-blog/20251110_011134_193.png)
+
+如果报错了也不要灰心, 点进去就能查看报错信息, 交给 ai 就完事了
+
+这样的话我们就把网站开发完成了, 接下来需要请出来赛博菩萨 `cloudflare` 给我们帮忙了
+
+> **Cloudflare**为什么是神
+> 
+> 1. **自动实现 HTTPS 加密**：提供免费 SSL/TLS 证书并自动续期，支持 “Full (Strict)” 模式，确保浏览器与 Cloudflare、Cloudflare 与源服务器间流量均加密，无需手动管理证书；
+> 2. **加速内容分发（CDN）**：将网站静态资源（图片、JS、CSS）缓存到全球边缘节点，让不同地区用户从就近节点获取资源，提升访问速度的同时减轻源服务器压力；
+> 3. **反向代理与 IP 隐藏**：转发用户请求至源服务器并返回响应，过程中**隐藏服务器真实 IP**，同时支持多服务器流量自动平衡，保障网站高可用性；
+> 4. **防护恶意流量**：自动防御 DDoS 攻击，屏蔽恶意 bot（爬虫、恶意扫描等），过滤非法请求，保护网站免受流量冲击和恶意访问；
+> 5. **优化 DNS 与负载均衡**：提供全球高速 DNS 解析，快速响应用户域名查询；支持多服务器负载均衡，按地理位置、流量等智能分配请求；
+> 6. **提供灵活配置与高级功能**：通过 “页面规则” 自定义重定向、缓存策略等；自带 Web 应用防火墙（WAF）防范 SQL 注入、XSS 等漏洞；支持 Bot 管理；还可通过 “Workers” 用 JS 实现自定义缓存、内容处理等高级需求。
+
+配置过程也挺有意思, 先去你买域名的地方, 我是在 spaceship 上买的域名, 把 dns 换成 cf 给的 dns
+
+![20251110_091134_694](/static/images/first-blog/20251110_091134_694.png)
+
+这样的话, 浏览器层层解析域名时, 就会解析到 cf 的服务器, 然后服务先打到 cf 的服务器, 再由 cf 的服务器和我们的服务器进行通信
+
+> **DNS 解析**: 用户输入域名后，设备先查本地缓存，没有就问路由器、ISP（运营商）的 DNS 服务器，还没有就从根服务器开始，依次问顶级域（如.com）、权威域名服务器，最终拿到 IP 地址，从而访问对应网站。
+
+然后添加一些二级域名, 把常用的 www 也解析到当前的服务器
+
+![20251110_091155_361](/static/images/first-blog/20251110_091155_361.png)
+
+最后在 cloudflare 的主页里找到 SSL/TLS 的 overview, 把 full 模式切换成 flexible 就大功告成了!
+
+有个坑: 如果你的 SSL 证书显示正在 pending, 那就先禁用 ssl, 等待一两分钟再打开就应该能使用了
+
+试着用域名访问: 
+![20251110_091134_130](/static/images/first-blog/20251110_091134_130.png)
+
+耶!
+
+### 总结
+
+这次我使用了 nextjs 的博客模板, 进行了自己的一些修改, 使用 docker 部署到了云服务器上, 并且在 cloudflare 上绑定了服务器的 DNS, 开启了 https 服务. 但是目前主机的 blog 服务暴露的是 80 端口, 这意味着 cloudflare 只能通过 http 服务访问主机, 而且由于 http 的端口是 80, 我只能运行一个服务, 这就很悲催了, 而且 watchtower 的轮询也显得不那么优雅, 后续还会进行 caddy 反向代理, webhook 等优化
