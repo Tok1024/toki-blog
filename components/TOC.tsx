@@ -10,8 +10,9 @@ export default function TOC({ toc }: { toc?: TocItem[] }) {
   if (!toc || toc.length === 0) return null
 
   return (
-    <aside className="hidden pl-6 lg:block xl:col-span-1">
-      <nav aria-label="目录" className="sticky top-24 max-h-[72vh] overflow-auto text-lg">
+    // 在 xl 及以上固定在视口右侧，不随页面滚动；在小屏隐藏
+    <aside className="hidden pl-6 lg:block xl:col-span-1 xl:fixed xl:top-28 xl:right-8 xl:w-64 xl:z-20">
+      <nav aria-label="目录" className="max-h-[72vh] overflow-auto text-lg">
         <div className="rounded-lg border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <h3 className="mb-3 text-lg font-semibold text-gray-800 uppercase dark:text-gray-200">
             目录
