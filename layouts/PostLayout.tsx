@@ -39,8 +39,8 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
     <SectionContainer>
       <ScrollTopAndComment />
       <article>
-        <div className="xl:divide-y xl:divide-gray-200 xl:dark:divide-gray-700 xl:grid xl:grid-cols-5 xl:gap-x-6">
-          <header className="pt-6 xl:pb-6 xl:col-span-5">
+        <div className="grid xl:grid-cols-5 xl:gap-x-6 xl:divide-y xl:divide-gray-200 xl:dark:divide-gray-700">
+          <header className="col-span-5 pt-6 xl:pb-6">
             <div className="space-y-1 text-center">
               <dl className="space-y-10">
                 <div>
@@ -60,24 +60,17 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
           <div className="divide-y divide-gray-200 xl:col-span-3 xl:col-start-2 xl:row-span-2 xl:pb-8 dark:divide-gray-700">
             <div className="prose dark:prose-invert max-w-none pt-10 pb-8">{children}</div>
             <div className="pt-6 pb-6 text-sm text-gray-700 dark:text-gray-300">
-              {/* <Link href={discussUrl(path)} rel="nofollow">
-                Discuss on Twitter
-              </Link> */}
-              {/* {` • `} */}
-              {/* <Link href={editUrl(filePath)}>View on GitHub</Link> */}
+              {/* <Link href={discussUrl(path)} rel="nofollow">Discuss on Twitter</Link> */}
             </div>
             {siteMetadata.comments && (
-              <div
-                className="pt-6 pb-6 text-center text-gray-700 dark:text-gray-300"
-                id="comment"
-              >
+              <div className="pt-6 pb-6 text-center text-gray-700 dark:text-gray-300" id="comment">
                 <Comments slug={slug} />
               </div>
             )}
           </div>
           {/* TOC Sidebar for xl and up */}
-          <TOC toc={content.toc as any} />
-          <footer className="xl:col-start-1 xl:col-span-1 xl:row-start-2">
+          <TOC toc={content.toc as unknown as { value: string; url: string; depth: number }[]} />
+          <footer className="xl:col-span-1 xl:col-start-1 xl:row-start-2">
             <div className="divide-gray-200 text-sm leading-5 font-medium xl:col-start-1 xl:row-start-2 xl:divide-y dark:divide-gray-700">
               {tags && (
                 <div className="py-4 xl:py-8">
