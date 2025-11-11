@@ -4,8 +4,10 @@ interface Props {
   children: ReactNode
 }
 
-export default function SectionContainer({ children }: Props) {
+export default function SectionContainer({ children }: { children: React.ReactNode }) {
   return (
-    <section className="mx-auto max-w-3xl px-4 sm:px-6 xl:max-w-5xl xl:px-0">{children}</section>
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      {children}
+    </div>
   )
 }

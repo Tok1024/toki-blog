@@ -1,0 +1,304 @@
+---
+title: "11.11日志"
+date: 2025-11-11
+lastmod: 2025-11-11
+tags: [web开发, NWPUShare]
+summary: "11.11忙活了一天, 搭建网站"
+images: []
+draft: false
+authors: ["default"]
+layout: PostLayout
+canonicalUrl: ""
+---
+
+哎今天搞了一天搭建 NWPUShare 这个网站, 感觉一直在 vibecoding, 自己只是不断地跟 codex 提需求, ts 代码属于能看懂但是不知道怎么回事的水平, 这种不能掌控全局的感觉有点难受
+
+我目前就专注于业务吧, 我的 mvp 功能需要包括
+- 首页的欢迎页面, 最新课程, 最新资源, 最新帖子
+- 浏览课程
+- 浏览资源
+- 根据学院对资源分类
+- 课程的详情页, 包括课程详情, 资源列表, 讨论区, 帖子列表
+- 按照标签检索课程, 资源
+- 写好帮助文档
+
+目前已经做好的是课程的数据库搭建, 包括 `course` 的详情页框架
+
+感觉看不懂 nextjs 的代码啊... 试着用 vscode 调试一下吧
+
+写 `launch.json`
+```json
+{
+       "version": "0.2.0",
+       "configurations": [
+         {
+           "name": "Attach to Next.js",
+           "type": "node",
+           "request": "attach",
+           "port": 9230,
+           "restart": true,
+           "skipFiles": ["<node_internals>/**"],
+           "sourceMaps": true
+         }
+       ]
+     }
+```
+
+然后用检查模式运行项目
+```bash
+NODE_OPTIONS='--inspect' pnpm dev
+```
+
+然后 woc, 简直震惊到我了, js 的代码**怎么 tmd 在满天乱飞????**
+
+![20251111_081132_800](/static/images/11-11/20251111_081132_800.png)
+
+这玩意是啥?
+
+![20251111_081124_665](/static/images/11-11/20251111_081124_665.png)
+
+这一大坨又是啥!!! 
+
+哎, 让 ai 给我一个任务我去尝试着写出来吧, 比如我需要完成: 添加资源按钮
+
+这个任务需要
+- 创建一个 post 请求, 读取信息并创建 `course` 发送到数据库
+- 在前端添加按钮, 绑定我们的信息
+
+
+Data fetch 部分我还是能看明白的, 稍微模仿着写一下
+```ts
+export const POST = async (req: NextRequest, { params }: { params: Promise<{ dept: string; slug: string }> }) => {
+  const input = await kunParsePostBody(req, courseResourceCreateSchema)
+  if (typeof input === 'string') {
+    return NextResponse.json(input)
+  }
+
+  const payload = await verifyHeaderCookie(req)
+  if (!payload) {
+    return NextResponse.json('用户未登录')
+  }
+
+  const { dept, slug } = await params
+  const department = await prisma.department.findUnique({ where: { slug: dept } })
+  if (!department) return NextResponse.json('学院不存在')
+
+  const course = await prisma.course.findUnique({
+    where: { department_id_slug: { department_id: department.id, slug } }
+  })
+  if (!course) return NextResponse.json('课程不存在')
+
+  if (course.id !== input.courseId) {
+    return NextResponse.json('课程信息不一致')
+  }
+
+  const created = await prisma.resource.create({
+    data: {
+      course_id: course.id,
+      title: input.title,
+      type: input.type,
+      links: input.links,
+      term: input.term,
+      teacher_id: input.teacherId ?? null,
+      author_id: payload.uid,
+      status: 'pending',
+      visibility: 'public'
+    },
+    select: {
+      id: true,
+      title: true,
+      type: true,
+      created: true,
+      links: true,
+      size_bytes: true,
+      author: { select: { id: true, name: true, avatar: true, role: true } }
+    } //select告诉我们我只想要这些字段作为返回值
+  })
+
+  return NextResponse.json(created)
+}
+```
+
+好的, 这样用户就可以通过 POST `/api/course/[dept]/[slug]` 来上传资源了, 不过这里我存储的只是资源的链接, 现在我们需要在前端创建一个按钮让用户可以填写信息并上传
+
+但是前端我是真的苦手, 于是交给 codex 完成
+
+按钮:
+
+```ts
+{user.uid && (
+	<div className="flex justify-end">
+	  <Button color="primary" variant="flat" onPress={onOpen}>
+		上传资源
+	  </Button>
+	</div>
+	)}
+```
+
+当按下按钮时, 展开 Modal
+
+```ts
+<Modal isOpen={isOpen} onClose={onClose} isDismissable={!submitting}>
+<ModalContent>
+  {(close) => (
+	<>
+	  <ModalHeader>上传课程资源</ModalHeader>
+	  <ModalBody className="space-y-4">
+		<Input
+		  label="标题"
+		  variant="bordered"
+		  value={form.title}
+		  onValueChange={(value) =>
+			setForm((prev) => ({ ...prev, title: value }))
+		  }
+		/>
+		<div className="space-y-2">
+		  <label className="text-small text-default-500">类型</label>
+		  <select
+			className="w-full border-small rounded-medium px-3 py-2 text-sm bg-content1"
+			value={form.type}
+			onChange={(e) =>
+			  setForm((prev) => ({ ...prev, type: e.target.value }))
+			}
+>
+			{RESOURCE_TYPE_OPTIONS.map((opt) => (
+			  <option key={opt.value} value={opt.value}>
+				{opt.label}
+			  </option>
+			))}
+		  </select>
+		</div>
+		<Input
+		  label="学期（可选，如 2024-Fall）"
+		  variant="bordered"
+		  value={form.term}
+		  onValueChange={(value) =>
+			setForm((prev) => ({ ...prev, term: value }))
+		  }
+		/>
+		<Textarea
+		  label="链接（每行一个）"
+		  variant="bordered"
+		  minRows={4}
+		  value={form.links}
+		  onValueChange={(value) =>
+			setForm((prev) => ({ ...prev, links: value }))
+		  }
+		  placeholder="https://pan.example.com/abc\nhttps://github.com/toki/resource"
+		/>
+	  </ModalBody>
+	  <ModalFooter>
+		<Button variant="light" onPress={close} isDisabled={submitting}>
+		  取消
+		</Button>
+		<Button
+		  color="primary"
+		  onPress={handleSubmit}
+		  isLoading={submitting}
+>
+		  提交
+		</Button>
+	  </ModalFooter>
+	</>
+  )}
+</ModalContent>
+</Modal>
+```
+
+填好信息, 点击提交就会回调 `handleSubmit`
+```ts
+const handleSubmit = async () => {
+    if (!form.title.trim()) {
+      toast.error('请输入标题')
+      return
+    }
+    const linkList = form.links
+      .split('\n')
+      .map((link) => link.trim())
+      .filter(Boolean)
+    if (!linkList.length) {
+      toast.error('至少提供一个链接')
+      return
+    }
+
+    setSubmitting(true)
+    const res = await kunFetchPost<ApiResp['list'][number] | string>(
+      `/course/${dept}/${slug}/resources`,
+      {
+        courseId,
+        title: form.title,
+        type: form.type,
+        links: linkList,
+        term: form.term || undefined
+      }
+    )
+    setSubmitting(false)
+    if (typeof res === 'string') {
+      toast.error(res)
+      return
+    }
+
+    setResources((prev) => [mapResource(dept, slug, res), ...prev])
+    toast.success('上传成功，等待审核')
+    setForm({
+      title: '',
+      type: RESOURCE_TYPE_OPTIONS[0].value,
+      links: '',
+      term: ''
+    })
+    onClose()
+  }
+```
+
+
+欧克, 这样就完成了, 去前端看看
+
+![20251111_101137_831](/static/images/11-11/20251111_101137_831.png)
+
+
+Good! 做了一个小任务, 感觉思路清晰了很多! 简单来说就是前端通过某些回调函数调用 api -> server component 收到请求 -> 通过 prisma 调用服务器 -> 返回响应
+
+哎呀太蠢了, git commit 忘了删 workflow, 好像出发了 touchgal 原本的 workflow, 不知道开发组的大佬会不会看见, 有点丢人...
+
+不管了, 今天做的东西包括:
+- 数据模型的搭建
+
+![20251112_121131_926](/static/images/11-11/20251112_121131_926.png)
+
+页面地图
+
+| 路径                                  | 说明                              | 关键组件                                            |
+| ----------------------------------- | ------------------------------- | ----------------------------------------------- |
+| `/`                                 | 首页，展示 Hero + 站点介绍 + 最新课程 + 最新资源 | `components/home/*`                             |
+| `/course/[dept]/[slug]`             | 课程详情（信息/资源/讨论/评价）               | `components/course/Header.tsx` 及其 Tabs/评论/评分子组件 |
+| `/course`                           | 课程索引（列表 + 搜索 + 筛选）              | 计划复用 `HomeCourseSection` 逻辑                     |
+| `/department/[slug]`                | 学院视图，列出课程/教师/资源统计               | 待定义                                             |
+| `/resource`                         | 旧补丁资源列表（尚未重写）                   | `components/resource/*`                         |
+| `/login`、`/register`、`/auth/forgot` | 账号流程                            | `components/login/*`, `components/register/*`   |
+| `/user/[id]/**`                     | 个人主页（资源/评论/收藏）                  | `components/user/*`                             |
+| `/admin/**`                         | 旧后台菜单（Galgame 审核等）              | `components/admin/*`                            |
+
+![20251112_121153_472](/static/images/11-11/20251112_121153_472.png)
+![20251112_121116_160](/static/images/11-11/20251112_121116_160.png)
+![20251112_121133_694](/static/images/11-11/20251112_121133_694.png)
+![20251112_121149_593](/static/images/11-11/20251112_121149_593.png)
+![20251112_121106_608](/static/images/11-11/20251112_121106_608.png)
+
+Api
+- `GET /api/course/list`
+- `GET /api/course/[dept]/[slug]`
+- `GET /api/course/[dept]/[slug]/resources`
+- `GET /api/course/[dept]/[slug]/posts`（仅读取，发布功能待接入）
+- `GET/POST/PUT/DELETE /api/course/[dept]/[slug]/comment`
+- `PUT /api/course/[dept]/[slug]/comment/like`
+- `GET/POST/PUT/DELETE /api/course/[dept]/[slug]/rating`
+- `PUT /api/course/[dept]/[slug]/rating/like`
+
+先大概这样吧, 后面还需要完成:
+
+- 清理原始项目的一些残留
+- 首页整理
+- 把一些页面的大小整理一下
+- 完整的过一遍数据流
+- 导入学院数据
+
