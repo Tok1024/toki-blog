@@ -32,7 +32,6 @@ interface LayoutProps {
 
 export default function PostLayout({ content, authorDetails, next, prev, children }: LayoutProps) {
   const { filePath, path, slug, date, title, tags } = content
-  console.log(path)
   const basePath = path.split('/')[0]
 
   return (
@@ -57,8 +56,9 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
               </div>
             </div>
           </header>
+
           {/* 主内容：从第2列开始，占三列（更宽） */}
-          <div className="divide-y divide-gray-200 xl:col-start-2 xl:col-span-3 xl:row-span-2 xl:pb-8 dark:divide-gray-700">
+          <div className="divide-y divide-gray-200 xl:col-span-3 xl:col-start-2 xl:row-span-2 xl:pb-8 dark:divide-gray-700">
             <div className="prose dark:prose-invert max-w-none pt-10 pb-8">{children}</div>
             <div className="pt-6 pb-6 text-sm text-gray-700 dark:text-gray-300">
               {/* <Link href={discussUrl(path)} rel="nofollow">Discuss on Twitter</Link> */}
@@ -69,9 +69,10 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
               </div>
             )}
           </div>
+
           {/* 左侧辅助列（tags / prev / next / back） */}
-          <footer className="xl:col-start-1 xl:col-span-1 xl:row-start-2">
-            <div className="divide-gray-200 text-sm leading-5 font-medium xl:col-start-1 xl:row-start-2 xl:divide-y dark:divide-gray-700">
+          <footer className="xl:col-span-1 xl:col-start-1 xl:row-start-2">
+            <div className="divide-gray-200 text-sm leading-5 font-medium xl:divide-y dark:divide-gray-700">
               {tags && (
                 <div className="py-4 xl:py-8">
                   <h2 className="text-xs tracking-wide text-gray-500 uppercase dark:text-gray-400">
@@ -120,6 +121,7 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
             </div>
           </footer>
         </div>
+
         {/* 固定在视口右侧的 TOC（组件内部使用 xl:fixed），脱离网格，不再占用列空间 */}
         <TOC toc={content.toc as unknown as { value: string; url: string; depth: number }[]} />
       </article>
