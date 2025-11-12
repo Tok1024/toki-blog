@@ -2,7 +2,7 @@ import 'css/tailwind.css'
 import 'pliny/search/algolia.css'
 import 'remark-github-blockquote-alert/alert.css'
 
-import { Inter } from 'next/font/google'
+// Use system fonts to avoid fetching Google Fonts during build
 import { Analytics, AnalyticsConfig } from 'pliny/analytics'
 import { SearchProvider, SearchConfig } from 'pliny/search'
 import Header from '@/components/Header'
@@ -12,12 +12,7 @@ import siteMetadata from '@/data/siteMetadata'
 import { ThemeProviders } from './theme-providers'
 import { Metadata } from 'next'
 
-const inter = Inter({
-  subsets: ['latin'],
-  display: 'swap',
-  // Keep variable name to avoid changing Tailwind CSS mapping
-  variable: '--font-space-grotesk',
-})
+// If you prefer a custom/local font, import it via CSS or a local @font-face rule.
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteMetadata.siteUrl),
@@ -63,11 +58,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const basePath = process.env.BASE_PATH || ''
 
   return (
-    <html
-      lang={siteMetadata.language}
-      className={`${inter.variable} scroll-smooth`}
-      suppressHydrationWarning
-    >
+    <html lang={siteMetadata.language} className="scroll-smooth" suppressHydrationWarning>
       <link
         rel="apple-touch-icon"
         sizes="76x76"
@@ -95,13 +86,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fff" />
       <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000" />
       <link rel="alternate" type="application/rss+xml" href={`${basePath}/feed.xml`} />
-      <body className="bg-white pl-[calc(100vw-100%)] text-black antialiased dark:bg-gray-950 dark:text-white">
+      <body className="bg-sky-50 pl-[calc(100vw-100%)] text-black antialiased dark:bg-gray-900 dark:text-white">
         <ThemeProviders>
           <Analytics analyticsConfig={siteMetadata.analytics as AnalyticsConfig} />
           <SectionContainer>
             <SearchProvider searchConfig={siteMetadata.search as SearchConfig}>
               <Header />
-              <main className="mb-auto">{children}</main>
+              <main className="-mt-10 mb-auto">{children}</main>
             </SearchProvider>
             <Footer />
           </SectionContainer>

@@ -147,9 +147,22 @@ export const Authors = defineDocumentType(() => ({
   computedFields,
 }))
 
+export const IdeasData = defineDocumentType(() => ({
+  name: 'IdeasData',
+  filePathPattern: 'ideas.json',
+  fields: {
+    id: { type: 'string', required: true },
+    title: { type: 'string', required: true },
+    text: { type: 'string', required: true },
+    date: { type: 'date', required: true },
+    mood: { type: 'string' },
+  },
+  computedFields,
+}))
+
 export default makeSource({
   contentDirPath: 'data',
-  documentTypes: [Blog, Authors],
+  documentTypes: [Blog, Authors, IdeasData],
   mdx: {
     cwd: process.cwd(),
     remarkPlugins: [

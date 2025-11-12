@@ -53,11 +53,11 @@ const nextConfig = {
   },
 
   // 确保 Contentlayer 生成文件被打包进 standalone（防止运行时报缺）
-  experimental: {
-    outputFileTracingIncludes: {
-      '/': ['.contentlayer/**'],
-    },
-  },
+  // experimental: {
+  //   outputFileTracingIncludes: {
+  //     '/': ['.contentlayer/**'],
+  //   },
+  // },
 
   webpack: (config) => {
     // 使用 SVGR 把 .svg 当 React 组件

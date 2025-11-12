@@ -3,7 +3,7 @@ import siteMetadata from '@/data/siteMetadata'
 
 export default function HeroCard() {
   return (
-    <section className="to-primary-50/40 dark:to-primary-900/10 rounded-2xl border border-gray-200 bg-gradient-to-b from-white p-6 text-left sm:p-8 md:p-12 dark:border-gray-800 dark:from-gray-900">
+    <section className="rounded-2xl border border-sky-100 bg-gradient-to-r from-fuchsia-100 to-cyan-200 text-left backdrop-blur-sm sm:p-8 md:p-12 dark:border-gray-800 dark:from-slate-800/60 dark:via-gray-900/40 dark:to-gray-950 dark:text-gray-100">
       <div className="bg-primary-50 text-primary-700 ring-primary-100 dark:bg-primary-900/20 dark:text-primary-300 dark:ring-primary-900/30 inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm ring-1">
         <span aria-hidden="true">✨</span>
         欢迎来到 {siteMetadata.headerTitle}
@@ -15,6 +15,7 @@ export default function HeroCard() {
         这里记录了我的一些想法
       </p>
 
+      {/* CTA 保留但不展示，放在需要时取消注释 */}
       {/* <div className="mt-8 flex items-center gap-4">
         <Link
           href="/blog"

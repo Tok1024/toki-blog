@@ -7,13 +7,16 @@ import ThemeSwitch from './ThemeSwitch'
 import SearchButton from './SearchButton'
 
 const Header = () => {
-  let headerClass = 'flex items-center w-full bg-white dark:bg-gray-950 justify-between py-10'
+  // 使 header 与 body 背景一致（淡蓝），暗色模式使用深色背景
+  let headerClass =
+    'flex items-center w-full justify-between min-h-[120px] py-10 pb-16 bg-sky-50 dark:bg-gray-900'
   if (siteMetadata.stickyNav) {
     headerClass += ' sticky top-0 z-50'
   }
 
   return (
     <header className={headerClass}>
+      {/* 保持内部元素透明，不要额外的 bg-white */}
       <Link href="/" aria-label={siteMetadata.headerTitle}>
         <div className="flex items-center justify-between">
           {typeof siteMetadata.headerTitle === 'string' ? (
