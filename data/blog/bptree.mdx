@@ -1,0 +1,510 @@
+---
+title: "用ts手搓一个b+树"
+date: 2025-11-15
+lastmod: 2025-11-15
+tags: ['data-structure', 'database']
+summary: "在gpt的帮助下, 使用typescript手搓一个b+tree"
+images: []
+draft: false
+authors: ["default"]
+layout: PostLayout
+canonicalUrl: ""
+---
+
+## 原理
+
+所以, 什么是 b+树?
+参考视频: [B+ Tree Explained | Search, Insertion & Deletion](https://www.youtube.com/watch?v=o_2psWN8k_c)
+
+![20251115_101147_909](/static/images/bplustree/20251115_101147_909.png)
+
+B+tree 基本上就是 b 树, 不同点在于在 B+tree 的**内部节点只存键和指针，所有真实数据只存在叶子节点**。这是 B+Tree 相比 B-Tree 的核心差别。
+
+![20251115_051142_461](/static/images/bplustree/20251115_051142_461.png)
+*回忆一下 cs61B 讲过的数据结构*
+
+B+tree 提供了一个及其平衡且公平的搜索, 使得每个节点有着差不多的深度, 整个树保持了高度平衡, 带来的是理想情况下的 BST 或者二分查找的 `log (N)` 速度
+
+### 结构
+
+B+树有两种节点: 内部节点和叶子节点, 内部节点只存储键和子节点的指针
+
+![20251115_101124_477](/static/images/bplustree/20251115_101124_477.png)
+
+而叶子节点存储了指向数据的指针
+
+![20251115_101123_399](/static/images/bplustree/20251115_101123_399.png)
+
+并且所有叶子节点是连在一起的! 这使得范围查询变得极为高效
+![20251115_101114_083](/static/images/bplustree/20251115_101114_083.png)
+
+B+tree 的阶 Order 规定了最大子节点数量和内部节点的最大 key 数量
+![20251115_101106_626](/static/images/bplustree/20251115_101106_626.png)
+![20251115_101145_756](/static/images/bplustree/20251115_101145_756.png)
+
+这一点确保了**所有的子节点高度相同**, 使得每个数据的查询时间相近, 更加公平
+![20251115_101133_442](/static/images/bplustree/20251115_101133_442.png)
+
+### 搜索
+
+![20251115_101140_515](/static/images/bplustree/20251115_101140_515.png)
+
+就是爬二叉树, 如果在沿途的内部节点找到对应的范围, 在进入下一层
+
+### 插入
+
+数据库在插入新数据时，会先找到数据应该插入的位置。然后，若对应的叶子节点满了，就会发生分裂，并将中间的键值（separator）上移到父节点。如果父节点也满了，就会继续向上分裂，直到树的根节点。如果根节点也分裂了，那么会增加新的根节点，树的高度增加。
+
+![20251115_101116_588](/static/images/bplustree/20251115_101116_588.png)
+
+依旧是找到对应的位置, 插入, 然后检查是否溢出, 如果溢出就分裂节点
+![20251115_101119_762](/static/images/bplustree/20251115_101119_762.png)
+![20251115_101130_848](/static/images/bplustree/20251115_101130_848.png)
+
+然后把中间的节点添加到父节点对应的位置, 如果这导致了父节点溢出, 那就继续分裂
+
+注意到了吗, **b+tree 就像 btree, 永远不会向下生长, 他只会上溢, 这就保证了每个节点的高度相同**, 因为分裂总是在向上冒泡，永远不会出现某个子节点的高度比其他子节点更深的情况，所以整个树始终高度平衡。
+
+### 删除
+
+删除操作要复杂一些, 删除首先会在叶子节点进行。如果删除后，叶子节点的 key 数量不足，则会尝试借 key（从相邻的兄弟节点借），如果借不到，则需要合并两个节点。在合并时，需要更新父节点中的分隔符，确保树的结构依然符合 B+ 树的要求。
+![20251115_101114_136](/static/images/bplustree/20251115_101114_136.png)
+
+我们先执行删除, 如果叶子节点不满足最少 key 数量的约束就尝试从旁边借 key, 如果借不到就去合并
+
+这个案例里, 旁边的节点显然帮不上忙
+![20251115_101122_044](/static/images/bplustree/20251115_101122_044.png)
+
+于是尝试合并, 这里要把指针也合并, 父节点对应的 seperator 删除
+![20251115_101106_854](/static/images/bplustree/20251115_101106_854.png)
+
+### 总结
+
+简单来说, b+tree 就是一种简单有效的数据结构, 通过
+- 始终维持自平衡 (order 的限制)
+- 只在子节点存储数据指针
+- 把叶子节点连接在一起
+- 节点的 key 太多 -> 分裂
+- 节点的 key 太少 -> borrow/merge
+
+使得增删改查都得到了 `log(N)` 级别的复杂度, 这就是为什么数据库都在用 b+tree 作为索引结构
+
+除此之外, b+tree 还有别的优势
+
+- **磁盘访问优化**：  由于数据库中的数据存储存在磁盘上，而磁盘的读取性能远远低于内存。B+ 树在设计时特别考虑了磁盘存取的效率，它的 **广度优先** 结构使得每次查找时，磁盘的随机访问最小化。与传统的链表或平衡二叉树相比，B+ 树能够有效减少磁盘的 I/O 次数。
+    
+- **支持多重索引**：在数据库中，可能会根据不同的列建立多个索引，每个索引通常是一个 B+ 树。通过组合这些索引，数据库能够更加高效地执行复杂的查询。
+
+## 实现
+
+接下来我将用 Typescript 实现一下 b+tree, 为什么要用 ts? 我不知道, 只是最近 ts 用的多比较顺手吧
+
+首先我们让 gpt 给我们生成一个项目骨架:
+```ts
+class BPlusNode {
+  public keys: Key[];
+  public children: BPlusNode[];
+  public leaf: boolean;
+
+  constructor(public order: number, opts?: { leaf?: boolean }) {
+    this.keys = [];
+    this.children = [];
+    this.leaf = opts?.leaf ?? true;
+  }
+}
+```
+
+然后看一下树的骨架
+```ts
+export class BPlusTree {
+  root: BPlusNode;
+  splitCount = 0;
+
+  constructor(public order = 4) {
+    if (order < 2) throw new Error('order must be >= 2');
+    this.root = new BPlusNode(order, { leaf: true });
+  }
+
+  /** TODO[Insert]: 完成公开插入逻辑（根满 → split → insertNonFull）。 */
+  insert(key: Key) {
+    throw new Error('TODO[Insert]: implement insert');
+  }
+
+  /** TODO[FindLeaf]: 沿 children 找到应插入的叶节点。 */
+  private findLeaf(node: BPlusNode, key: Key): BPlusNode {
+    throw new Error('TODO[FindLeaf]: implement findLeaf');
+  }
+
+  /** TODO[InsertNonFull]: 在非满节点中插入；若 child 满则 split 再递归。 */
+  private insertNonFull(node: BPlusNode, key: Key) {
+    throw new Error('TODO[InsertNonFull]: implement insertNonFull');
+  }
+
+  /** TODO[SplitChild]: 分裂 childIndex 处的子节点，将中间键提升到 parent。 */
+  private splitChild(parent: BPlusNode, childIndex: number) {
+    throw new Error('TODO[SplitChild]: implement splitChild');
+  }
+
+  /** 读取树高（根为 1）。 */
+  height(node: BPlusNode = this.root): number {
+    let h = 1;
+    while (!node.leaf) {
+      node = node.children[0];
+      h++;
+    }
+    return h;
+  }
+}
+```
+
+我们需要完成的是插入和查找部分
+
+### 插入
+
+插入实现起来有点复杂, 首先进行一个约束: 我们只对非满节点插入, 如果节点满了, 我们要先把他分裂一下, 也就是插入时检查是否满了, 而**不是插入完检查是否满了**, 不需要这样的回溯, 和我们手动的插入过程是不同的
+
+还是有点模糊? 让我们思考一下整个过程的不变量 invirants
+
+1. 递归前提不变量
+     调用 insertNonFull(node, key) 时，`node.keys.length < 2*order-1` 始终成立。也就是说，insertNonFull 只接手“尚未满”的节点。根若满，会在公共 insert 入口先 split，然后才递归；中间任何 child 若满，都在往下递归前 split。
+2. 子树容量不变量
+     递归访问某个 child 时，保证“进入子树前该 child 已经被 split 掉所有满节点”，因此真正传给下一层的节点仍然是“非满”的。换句话说：
+     - 对于每条递归路径：父节点处理 child 之前都会确认 child 不满
+     - 这确保了递归到底的叶子插入不会再触发上溢，**所有分裂都在沿途被即时处理**。
+
+有了这两个不变量，整个调用链就像这样：
+
+  - 从根开始，若根满则 split。
+  - 找到应去的 child，若 child 满则立刻 split 并决定继续走左还是右子节点。
+  - 递归调用 child（此时 child 已不满）。
+  - 在叶子插入时一定有空位，只需 splice。
+
+任何分裂（上溢）都会当场“父节点承担”，而不会等到递归返回再处理，这就是为什么递归包裹整个调用链的写法最简单也最安全。
+
+这下思路就清晰多了! 接下来砍瓜切菜的完成 `insertNonFull`, 在一个节点 (可能是叶子也可能是内部) 插入 key
+
+- 叶子: 直接插入对应位置
+- 内部: 找到 key 对应的子节点, 先检查是否满了, 如果满了就调用 `splitChild` 先分裂, 对子节点递归调用 `insertNonFull`
+- 就虽然上文讲的插入过程是爬树查到最底部, 但是仔细想想, 上溢的过程可是需要沿途的节点的, 所以比较好的方式是维护一个从根节点开始的递归调用链
+- 形象的想一下
+
+```ts
+private insertNonFull(node: BPlusNode, key: Key) {
+  expect(!this.is_full(node), "insertNonFull: 我只插入没满的节点");
+  // 添加一个节点, 这里可以是叶子节点, 也可以是普通节点
+  if (node.leaf) {
+    // 叶子节点, 直接插入对应位置
+    const pos = this.lowerBound(node.keys, key);
+    node.keys.splice(pos, 0, key);
+  }
+  else{
+    // 内部节点
+    // 我们去找他的子节点中应该插入的位置
+    const pos = this.lowerBound(node.keys, key);
+    const child = node.children[pos];
+    // 先检查下子节点满了没, 如果满了, 先分裂
+    if (child.keys.length === 2*this.order - 1)
+      this.splitChild(node, pos);
+    this.insertNonFull(node.children[pos], key);
+  }
+}
+```
+
+然后就是最难的 `splitChild` 方法了, 我们需要把一个子节点分裂, 并把对应的 key 添加到父节点里
+
+这里有个坑:
+- 如果 child 是叶子节点, 那么上升的那个元素要保留
+- 如果 child 是内部节点, 上升的元素直接交给父节点, 新的节点不再保留
+
+然后要确定中间节点的索引, 其实是固定的, 用这里的定义（order=t，节点最多 `2*t-1` 个键），中间位置就是 t-1，也就是偏左的那个索引。原因：
+- 节点满时有 `2*t-1` 个键，按照 B 树/B+ 树的经典定义，split 后左子节点拿 t-1 个键，中间第 t 个键上升到父节点，右子节点拿剩余 t-1 个键。
+- 因为键数是奇数，选 t-1 刚好能“左边和右边都等大”，既不会让任一子节点少于 t-1 个键，又能符合 `t-1 ≤ keys ≤ 2*t-1` 的约束。
+
+然后就能写 `splitChild` 方法了
+```ts
+private splitChild(parent: BPlusNode, childIndex: number) {
+   this.splitCount++;
+   const child = parent.children[childIndex];
+   // 这个值是固定的, 因为我们都是在节点满的那一刻让他分裂
+   const mid = this.order - 1;
+   const right = new BPlusNode(this.order, { leaf: child.leaf });
+
+   //splice会原地修改原数组并返回切片后得到的数组, 一举两得
+   //如果是叶子节点, 那么右侧要包括中间节点(数据不能丢)
+   right.keys = child.keys.splice(mid + (child.leaf ? 0 : 1));
+   if (!child.leaf) {
+     right.children = child.children.splice(mid + 1);
+   }
+
+   // 修改父节点的child
+   parent.children.splice(childIndex + 1, 0, right);
+   const promotedKey = child.leaf ? right.keys[0] : child.keys.splice(mid, 1)[0];
+   // 修改父节点的key
+   // console.log(`split happens: promotedKey=${promotedKey} `)
+   parent.keys.splice(childIndex, 0, promotedKey);
+ }
+```
+
+![20251115_031158_152](/static/images/bplustree/20251115_031158_152.png)
+
+这是为何呢? 插入 22 的时候不但没有插入 child2, 反而插入了 1
+
+打印看看?
+![20251115_031159_212](/static/images/bplustree/20251115_031159_212.png)
+
+仔细看, key=22 的时候应该插入第 2 个 child, 于是仔细排查, 发现在这里
+![Pasted image 20251115153617](/static/images/bplustree/Pasted image 20251115153617.png)
+
+奶奶滴, 分裂之后父节点的 keys 也变了, 要重新查一下位置!
+```ts
+private insertNonFull(node: BPlusNode, key: Key) {
+  /**
+   * insertNonFull 只处理“当前节点未满”的情况。
+   * - 如果是叶子：直接找到插入位置 splice。
+   * - 如果是内部节点：先找到要递归的子节点，若它已满则 split，再递归。
+   */
+  let pos = this.lowerBound(node.keys, key);
+  // console.log(`key:${key}, pos: ${pos}`)
+  expect(!this.isFull(node), 'insertNonFull: node must not be full');
+  if (node.leaf) {
+    node.keys.splice(pos, 0, key);
+  } else {
+    const child = node.children[pos];
+    if (this.isFull(child)) {
+      this.splitChild(node, pos);
+      // split 之后需要重新决定插入到哪个子节点
+      pos = this.lowerBound(node.keys, key);
+    }
+    this.insertNonFull(node.children[pos], key);
+  }
+}
+```
+
+就这一个 bug 让我 de 了一个多小时, 梦回 cs61b 的 debug 时光了
+
+当然丢给 ai 看一秒钟就出结果了, 但是我始终觉得只有当你感受到困惑, 不断动手修改, 不断思考的时候你才真正的变强了, 换言之我是传统派.
+
+### 查找
+
+实现了插入就可以写查找功能了, 首先我们需要一个二分查找, 就是一个 `lowerBound` 函数
+
+```ts
+/** TODO[LowerBound]: 返回有序数组中 key 的插入位置。 */
+  private lowerBound(keys: Key[], key: Key) {
+    let lo = 0;
+    let hi = keys.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >>> 1;
+      if (keys[mid] < key) lo = mid + 1;
+      else hi = mid;
+    }
+    return lo;
+  }
+```
+
+关于这个 `lowerBound` 其实也是有说法的, 有两个写法, 上面这个是左闭右开区间, 可以看到 `hi` 是从 `length` 开始的, 然后 `while` 里没有等号 (因为是左闭右开), `hi` 每次移动到 `mid` 的位置, 这样的代码比较简洁吧, 最后结束时 lo 和 hi 相等, 返回第一个大于等于指定 key 的位置
+
+其实还有一个写法是闭区间
+
+```ts
+// 闭区间版本
+function lowerBoundClosed(keys: number[], key: number) {
+  let lo = 0;
+  let hi = keys.length - 1; // hi 为最后索引，区间是 [lo, hi]
+  while (lo <= hi) {
+    const mid = (lo + hi) >>> 1;
+    if (keys[mid] < key) lo = mid + 1;
+    else hi = mid - 1;
+  }
+  return lo; // 插入位置（同样是 0..length）
+}
+```
+
+这里维护了一个闭区间, 所以 hi 和 lo 可以相等, hi 每次也移动到 `mid-1`, 我比较习惯这个, 挺直观的
+
+然后这里有一个很巧妙的地方, 先看图:
+![20251115_101130_848](/static/images/bplustree/20251115_101130_848.png)
+
+你会发现, `lowerbound` 返回的是第一个大于等于 key 的键的索引, 比如如图的左子树
+输入 3-> 0, 18 -> 1, 41-> 2, **woc, 这不就是在 children 里的索引么**, 简直太巧妙了!
+
+接下来实现从一个节点 (可以是叶子也可以不是) 找叶子节点的函数, 再实现一个从根节点开始查找的 search 函数即可
+
+```ts
+private findLeaf(node: BPlusNode, key: Key): BPlusNode {
+  if (node.leaf) return node;
+  while(!node.leaf){
+    node = node.children[this.lowerBound(node.keys, key)]
+  }
+  return node;
+}
+/** 简单查找：返回包含该键的叶节点（若不存在则返回 null） */
+  search(key: Key): Key | null {
+    const leaf = this.findLeaf(this.root, key)
+    const idx = this.lowerBound(leaf.keys, key);
+    return leaf.keys[idx] === key ? key : null;
+  }
+```
+
+这样的话查找就完成了... 吗?
+
+运行发现报错:
+![20251115_041142_910](/static/images/bplustree/20251115_041142_910.png)
+
+仔细看看错误案例, 发现是一个边界情况, 当搜索的 key=8031, 恰好在父节点的 keys 中, 也就是子节点的一个起点时, 我们的 `lowerBound` 给出了左边的方向, 但是实际上这个节点是在子节点分裂的时候从右节点分裂上来的, 我们应该让他去右边, 于是打一个补丁:
+
+```ts
+private findLeaf(node: BPlusNode, key: Key): BPlusNode {
+    if (node.leaf) return node;
+    while(!node.leaf){
+      let idx = this.lowerBound(node.keys, key);
+      console.error(`findLeaf: node.keys=[${node.keys.join(',')}] key=${key} lowerBoundIdx=${idx}`);
+      if (idx < node.keys.length && node.keys[idx] === key) idx = idx + 1;
+      node = node.children[idx];
+    }
+    return node;
+  }
+```
+
+解释:在 B+Tree 内部节点中，`key[i]` 表示 `child[i+1]` 子树的最小键。因此如果 `lowerBound(key)` 命中了一个等于 key 的位置，你必须走到右侧子节点 `(i+1)`。
+
+![20251115_041135_643](/static/images/bplustree/20251115_041135_643.png)
+
+通过了全部测试! 
+
+## 总结
+
+### 分析性能
+
+分析下 b+树的性能
+![20251115_041128_960](/static/images/bplustree/20251115_041128_960.png)
+
+我勒个豆, ts 运行的还挺快的, 几万条数据才是毫秒级
+![20251115_041115_143](/static/images/bplustree/20251115_041115_143.png)
+
+**order = 4**
+
+|size|total time|ops/s|avgInsert|avgSearch|height|splits|
+|---|---|---|---|---|---|---|
+|1000|2.24ms|~445k|2245ns|1251ns|5|247|
+|5000|6.05ms|~826k|1210ns|433ns|5|1230|
+|20000|31.10ms|~643k|1555ns|416ns|6|5034|
+
+**order = 8**
+
+|size|total time|ops/s|avgInsert|avgSearch|height|splits|
+|---|---|---|---|---|---|---|
+|1000|0.23ms|~4.29M|233ns|190ns|3|104|
+|5000|1.27ms|~3.9M|254ns|219ns|4|518|
+|20000|6.72ms|~2.97M|336ns|596ns|5|2088|
+
+**order = 16**
+
+| size  | total time | ops/s  | avgInsert | avgSearch | height | splits |
+| ----- | ---------- | ------ | --------- | --------- | ------ | ------ |
+| 1000  | 0.19ms     | ~5.27M | 190ns     | 357ns     | 3      | 47     |
+| 5000  | 1.21ms     | ~4.13M | 242ns     | 187ns     | 3      | 236    |
+| 20000 | 8.02ms     | ~2.49M | 401ns     | 294ns     | 4      | 963    |
+
+通过这样的数据可以比较直观的理解参数变化导致延迟的变化
+
+再看看顺序插入和随机插入的对比
+```bash
+Benchmark orders=4,8,16 sizes=1000,5000,20000 modes=sequential,random
+order=4 size=1000 mode=sequential -> inserts=1000 time=2.32ms (avgInsert=2323ns), avgSearch=1200ns, height=5, splits=436
+order=4 size=1000 mode=random -> inserts=1000 time=1.24ms (avgInsert=1242ns), avgSearch=1021ns, height=5, splits=247
+  >> comparison order=4 size=1000: random / sequential time ratio=0.53 (seq splits=436, rnd splits=247)
+order=4 size=5000 mode=sequential -> inserts=5000 time=4.13ms (avgInsert=826ns), avgSearch=1454ns, height=6, splits=2213
+order=4 size=5000 mode=random -> inserts=5000 time=4.22ms (avgInsert=844ns), avgSearch=538ns, height=5, splits=1230
+  >> comparison order=4 size=5000: random / sequential time ratio=1.02 (seq splits=2213, rnd splits=1230)
+order=4 size=20000 mode=sequential -> inserts=20000 time=23.70ms (avgInsert=1185ns), avgSearch=1894ns, height=7, splits=8878
+order=4 size=20000 mode=random -> inserts=20000 time=11.55ms (avgInsert=577ns), avgSearch=437ns, height=6, splits=5034
+  >> comparison order=4 size=20000: random / sequential time ratio=0.49 (seq splits=8878, rnd splits=5034)
+order=8 size=1000 mode=sequential -> inserts=1000 time=0.13ms (avgInsert=133ns), avgSearch=160ns, height=4, splits=158
+order=8 size=1000 mode=random -> inserts=1000 time=0.19ms (avgInsert=192ns), avgSearch=136ns, height=3, splits=104
+  >> comparison order=8 size=1000: random / sequential time ratio=1.44 (seq splits=158, rnd splits=104)
+order=8 size=5000 mode=sequential -> inserts=5000 time=0.62ms (avgInsert=123ns), avgSearch=209ns, height=4, splits=811
+order=8 size=5000 mode=random -> inserts=5000 time=1.19ms (avgInsert=238ns), avgSearch=183ns, height=4, splits=518
+  >> comparison order=8 size=5000: random / sequential time ratio=1.93 (seq splits=811, rnd splits=518)
+order=8 size=20000 mode=sequential -> inserts=20000 time=3.36ms (avgInsert=168ns), avgSearch=986ns, height=5, splits=3258
+order=8 size=20000 mode=random -> inserts=20000 time=14.62ms (avgInsert=731ns), avgSearch=514ns, height=5, splits=2088
+  >> comparison order=8 size=20000: random / sequential time ratio=4.35 (seq splits=3258, rnd splits=2088)
+order=16 size=1000 mode=sequential -> inserts=1000 time=0.31ms (avgInsert=306ns), avgSearch=248ns, height=3, splits=68
+order=16 size=1000 mode=random -> inserts=1000 time=0.54ms (avgInsert=539ns), avgSearch=398ns, height=3, splits=47
+  >> comparison order=16 size=1000: random / sequential time ratio=1.76 (seq splits=68, rnd splits=47)
+order=16 size=5000 mode=sequential -> inserts=5000 time=2.08ms (avgInsert=417ns), avgSearch=392ns, height=3, splits=351
+order=16 size=5000 mode=random -> inserts=5000 time=3.41ms (avgInsert=682ns), avgSearch=401ns, height=3, splits=236
+  >> comparison order=16 size=5000: random / sequential time ratio=1.63 (seq splits=351, rnd splits=236)
+order=16 size=20000 mode=sequential -> inserts=20000 time=8.03ms (avgInsert=401ns), avgSearch=716ns, height=4, splits=1418
+order=16 size=20000 mode=random -> inserts=20000 time=9.15ms (avgInsert=458ns), avgSearch=249ns, height=4, splits=963
+  >> comparison order=16 size=20000: random / sequential time ratio=1.14 (seq splits=1418, rnd splits=963)
+Benchmarks finished.
+```
+
+> 以下内容由 GPT5.1 生成
+
+#### 1. Order=4：随机插入比顺序插入更快（约 2×）
+
+**原因：**
+* order 太小 → 树高度高（5~7 层）
+* 顺序插入总是插在右边 → 右支频繁分裂 → splits 数量巨大
+* 随机插入分布均匀 → 分裂更平均 → 树形状更平衡
+**结果：**
+* 顺序模式 splits 多到离谱，导致明显变慢
+* 随机反而快
+
+#### 2. Order=8：顺序插入比随机插入快很多（最高 4~5×）
+
+**原因：cache 局部性发挥到极致**
+* 顺序插入每次都沿右边链走 → 节点反复被访问 → **都在 L1/L2 cache 里**
+* 随机插入每次走不同路径 → **pointer chasing** → 高 cache miss
+顺序插入时：
+* ops 只需访问 4~5 层且命中 cache
+* 每次 insert 达到 **100~170ns**（极快）
+随机插入时：
+* 每层节点不同 → 都需要从内存加载 → 4~5 × RAM 访问延迟
+* 变成**500~700ns**等级
+
+#### 3. Order=16：随机比顺序稍慢，但差距变小（1.1~1.7×）
+
+**原因：order 越大 → 树越浅，高度越低**
+* 高度从 5 降到 3~4
+* 随机插入需要的 pointer chasing 层数减少
+* cache miss 成本下降
+因此：
+* 顺序仍略快（右链全在 cache）
+* 但随机不至于慢到 4×，整体差距变小
+
+需要带走的核心直觉: 
+
+- **数据库的核心延迟来自于 IO 而不是二分查找**, 所以我们**让树变得无比矮胖, 多横向生长而非纵向生长**
+- Order 较大的树是 cache miss friendly 的, 对随机访问这种大概率 cachemiss 的查询很友好, 因为高度低, 降低了 io 的延迟
+```bash
+           小阶（order=4）         中阶（order=8）         大阶（order=16）  
+
+顺序    热路径超明显 → 超快      仍然很快（高度低）      快（但节点更大）
+
+随机    每层访问不同节点 → 慢     高度更低 → 缓解变慢    更浅 → 更抗随机 → 更快
+```
+
+### 捉虫
+
+顺带一提, 其实上面那个视频里的图有误导性
+![20251115_101140_515](/static/images/bplustree/20251115_101140_515.png)
+
+首先呢, 一个框框是一个节点没错, 但是**不是所有的箭头都是指针**, **每两个节点之间只存在一个指针**, 剩下的 key -> children 的索引映射是通过 `lowerBound` 计算出来的, 计算出**keys 中第一个大于等于 key 的索引, 作为 children 的索引**, **等价于图中的两个 key 的缝指向子节点**, 但是这只是一个逻辑表示, 换句话说
+
+- 一个内部节点其实就是两个数组：
+    - `keys[0..m-1]`
+    - `children[0..m]`（指针数 = key 数 + 1）
+        
+- 查找 key 的时候：  
+    用 `lower_bound(keys, x)` 找到第一个 `>= x` 的位置 `i`，  
+    然后走 `children[i]` 这一个指针就行了。
+
+其次呢, 这个图的问题在于叶子节点的值应该在倒数第二层的父节点也出现, 这是 split 时候复制上去的.
+
+### 感想
+
+现在的 ai 真是强大啊, 我几句话就给我生成了体验特别好的实验模板, 然而学校老师连 ai 都不会用, 每次上实验课就把不知道多少年的构式甩到我们脸上, 真是个悲伤的故事
+但是即使这样我也想自己动手去实现自己好奇的事物, 感觉经过了自己的双手的东西才是真正属于自己的, 所以我会不断的写代码的! 就像这样动手写一些, 改改 bug, 跑一跑 benchmark, 这才是真正的学习!
