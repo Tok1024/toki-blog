@@ -1,11 +1,10 @@
 {
-  "数据库": 1,
-  "data-structure": 1,
-  "typescript": 1,
   "web开发": 2,
   "nwpushare": 1,
-  "blog": 1,
-  "nextjs": 1,
+  "data-structure": 1,
+  "database": 1,
   "intro": 1,
-  "test": 1
+  "test": 1,
+  "blog": 1,
+  "nextjs": 1
 }

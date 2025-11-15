@@ -8,13 +8,13 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 
 const ContentSecurityPolicy = `
   default-src 'self';
-  script-src 'self' 'unsafe-eval' 'unsafe-inline' giscus.app umami.toki.codes;
-  style-src 'self' 'unsafe-inline';
-  img-src * blob: data:;
+  script-src 'self' 'unsafe-eval' 'unsafe-inline' giscus.app giscus.githubapp.com static.cloudflareinsights.com umami.toki.codes cdn.jsdelivr.net;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  img-src 'self' data: blob: https:;
   media-src *.s3.amazonaws.com;
-  connect-src *;
-  font-src 'self';
-  frame-src giscus.app
+  connect-src 'self' https://static.cloudflareinsights.com https://api.github.com https://umami.toki.codes https://giscus.app https://giscus.githubapp.com;
+  font-src 'self' https://fonts.gstatic.com;
+  frame-src giscus.app giscus.githubapp.com;
 `
 
 const securityHeaders = [
