@@ -4,11 +4,49 @@
 @source '../node_modules/pliny';
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* OPPO Sans 4.0 字体 */
+@font-face {
+  font-family: 'OPPO Sans 4.0';
+  src: url('/fonts/oppoSans4/OPPO Sans 4.0.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'OPPO Sans 4.0';
+  src: url('/fonts/oppoSans4/OPPO Sans 4.0.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'OPPO Sans 4.0';
+  src: url('/fonts/oppoSans4/OPPO Sans 4.0.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'OPPO Sans 4.0';
+  src: url('/fonts/oppoSans4/OPPO Sans 4.0.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Core theme configuration */
 @theme {
   /* Font families */
-  --font-sans: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+  --font-sans: 'OPPO Sans 4.0', 'OPPO Sans', 'HarmonyOS Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
     'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+
+  /* Letter spacing - 调整字间距，让字体更舒适 */
+  --tracking-wider: 0.025em;  /* 更宽松的默认字间距 */
+  --tracking-wide: 0.05em;    /* 宽字间距 */
+  --tracking-widest: 0.1em;   /* 最宽字间距 */
 
   /* Colors */
   /* Copied from https://tailwindcss.com/docs/theme#default-theme-variable-reference */
@@ -79,6 +117,25 @@
   }
 }
 
+/* 全局内联代码样式覆盖 */
+body :where(code):not(pre code) {
+  background-color: rgba(156, 163, 175, 0.15) !important;
+  color: var(--color-primary-600) !important;
+  padding: 0.125rem 0.375rem !important;
+  border-radius: 0.375rem !important;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Monaco, Inconsolata, "Fira Code", "Fira Mono", "Droid Sans Mono", "Courier New", monospace !important;
+  font-size: 0.875em !important;
+  font-weight: 500 !important;
+  border: 1px solid rgba(156, 163, 175, 0.2) !important;
+  display: inline !important;
+}
+
+.dark body :where(code):not(pre code) {
+  background-color: rgba(75, 85, 99, 0.3) !important;
+  color: var(--color-primary-300) !important;
+  border: 1px solid rgba(75, 85, 99, 0.4) !important;
+}
+
 @layer utilities {
   .prose {
     & a {
@@ -91,14 +148,30 @@
       }
     }
     & :where(h1, h2) {
-      font-weight: 700;
-      letter-spacing: var(--tracking-tight);
+      font-weight: 500;  /* 从700降到500，更轻更优雅 */
+      letter-spacing: 0.05em;  /* 增加字间距，从0.025em到0.05em */
+      line-height: 1.4;  /* 增加行高，让标题不挤 */
     }
     & h3 {
-      font-weight: 600;
+      font-weight: 500;  /* 从600降到500，和h1/h2保持一致 */
+      letter-spacing: 0.03em;  /* 适中字间距 */
+      line-height: 1.35;  /* 略小于h1/h2的行高 */
     }
+    & p, & li {
+      letter-spacing: 0.01em;  /* 段落和列表使用适中的字间距 */
+    }
+    /* 美化内联代码（反引号包裹的代码） */
     & :where(code):not(pre code) {
-      color: var(--color-indigo-500);
+      background-color: rgba(156, 163, 175, 0.15) !important;  /* 浅灰背景 */
+      color: var(--color-primary-600) !important;  /* 蓝色文字 */
+      padding: 0.125rem 0.375rem !important;  /* 內边距 */
+      border-radius: 0.375rem !important;  /* 圆角 */
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Monaco, Inconsolata, "Fira Code", "Fira Mono", "Droid Sans Mono", "Courier New", monospace !important;  /* 等宽字体 */
+      font-size: 0.875em !important;  /* 略小字体 */
+      font-weight: 500 !important;  /* 中等字重 */
+      border: 1px solid rgba(156, 163, 175, 0.2) !important;  /* 细边框 */
+      display: inline !important;  /* 确保内联显示 */
+      vertical-align: baseline !important;  /* 垂直对齐 */
     }
   }
 
@@ -114,6 +187,32 @@
     }
     & :where(h1, h2, h3, h4, h5, h6) {
       color: var(--color-gray-100);
+    }
+    & :where(h1, h2) {
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      line-height: 1.4;
+    }
+    & h3 {
+      font-weight: 500;
+      letter-spacing: 0.03em;
+      line-height: 1.35;
+    }
+    & p, & li {
+      letter-spacing: 0.01em;
+    }
+    /* 暗色模式下的内联代码 */
+    & :where(code):not(pre code) {
+      background-color: rgba(75, 85, 99, 0.3) !important;  /* 暗灰背景 */
+      color: var(--color-primary-300) !important;  /* 亮蓝色文字 */
+      padding: 0.125rem 0.375rem !important;
+      border-radius: 0.375rem !important;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Monaco, Inconsolata, "Fira Code", "Fira Mono", "Droid Sans Mono", "Courier New", monospace !important;
+      font-size: 0.875em !important;
+      font-weight: 500 !important;
+      border: 1px solid rgba(75, 85, 99, 0.4) !important;  /* 暗色边框 */
+      display: inline !important;
+      vertical-align: baseline !important;
     }
   }
 }

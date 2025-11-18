@@ -11,8 +11,8 @@ const ContentSecurityPolicy = `
   script-src 'self' 'unsafe-eval' 'unsafe-inline' giscus.app giscus.githubapp.com static.cloudflareinsights.com umami.toki.codes cdn.jsdelivr.net;
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
   img-src 'self' data: blob: https:;
-  media-src *.s3.amazonaws.com;
-  connect-src 'self' https://static.cloudflareinsights.com https://api.github.com https://umami.toki.codes https://giscus.app https://giscus.githubapp.com;
+  media-src 'self' https: data: blob:;
+  connect-src 'self' https://static.cloudflareinsights.com https://api.github.com https://umami.toki.codes https://giscus.app https://giscus.githubapp.com https:;
   font-src 'self' https://fonts.gstatic.com;
   frame-src giscus.app giscus.githubapp.com;
 `

@@ -86,7 +86,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fff" />
       <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000" />
       <link rel="alternate" type="application/rss+xml" href={`${basePath}/feed.xml`} />
-      <body className="bg-sky-50 pl-[calc(100vw-100%)] text-black antialiased dark:bg-gray-900 dark:text-white">
+      <body
+        className="bg-sky-50 pl-[calc(100vw-100%)] tracking-wide text-black antialiased dark:bg-gray-900 dark:text-white"
+        style={{
+          fontFamily:
+            '"OPPO Sans 4.0", "OPPO Sans", "HarmonyOS Sans", -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif',
+          letterSpacing: '0.025em',
+        }}
+      >
         <ThemeProviders>
           <Analytics analyticsConfig={siteMetadata.analytics as AnalyticsConfig} />
           <SectionContainer>
