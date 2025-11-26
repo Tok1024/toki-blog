@@ -83,17 +83,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         color="#5bbad5"
       />
       <meta name="msapplication-TileColor" content="#000000" />
-      <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fff" />
+      <meta name="theme-color" media="(prefers-color-scheme: light)" content="#e0f2fe" />
       <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000" />
       <link rel="alternate" type="application/rss+xml" href={`${basePath}/feed.xml`} />
       <body
-        className="bg-sky-50 pl-[calc(100vw-100%)] tracking-wide text-black antialiased dark:bg-gray-900 dark:text-white"
+        className="relative min-h-screen overflow-x-hidden bg-sky-50/95 pl-[calc(100vw-100%)] tracking-wide text-black antialiased dark:bg-gray-900 dark:text-white"
         style={{
           fontFamily:
             '"OPPO Sans 4.0", "OPPO Sans", "HarmonyOS Sans", -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif',
           letterSpacing: '0.025em',
         }}
       >
+        <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+          <div className="absolute -top-24 -left-16 h-80 w-80 bg-[radial-gradient(circle_at_30%_30%,rgba(14,165,233,0.22),transparent_55%)] blur-3xl md:h-[28rem] md:w-[28rem]" />
+          <div className="absolute top-[-6%] right-[-8%] h-72 w-72 bg-[radial-gradient(circle_at_70%_20%,rgba(125,211,252,0.2),transparent_52%)] blur-3xl md:h-[26rem] md:w-[26rem]" />
+          <div className="absolute bottom-[-18%] left-[18%] h-96 w-[30rem] bg-[radial-gradient(circle_at_40%_60%,rgba(56,189,248,0.18),transparent_60%)] blur-[120px]" />
+        </div>
         <ThemeProviders>
           <Analytics analyticsConfig={siteMetadata.analytics as AnalyticsConfig} />
           <SectionContainer>

@@ -1,0 +1,854 @@
+---
+title: '6.S081 lab7-Multithreading'
+date: 2025-11-24
+lastmod: 2025-11-24
+tags: ['OS', 'Multithread', 'lock', 'schedule']
+summary: '6.s081的lab7 多线程实验总结'
+images: []
+draft: false
+authors: ['default']
+layout: PostLayout
+canonicalUrl: ''
+---
+
+# 📝 Lab 7: Multithreading 实验记录
+
+## 🎯 实验目标
+
+- [x] **Uthread**: 在用户态实现线程切换（理解 Context Switch 本质）。
+- [x] **Ph**: 使用 `pthread` 锁解决哈希表并发竞争（理解锁的粒度）。
+- [x] **Barrier**: 实现同步屏障（理解条件变量 Cond Var 和 Sleep/Wakeup）。
+
+---
+
+## 🧠 核心理论回顾
+
+> 关联章节：[[xv6 Book Chapter 7 - Scheduling]]
+
+- **为什么用户态线程不需要 trap 进内核？**
+  - _思考笔记：因为用户态线程是在一个进程内部调度的，内核感知不到。我们只需要手动保存/恢复寄存器，就像函数调用一样。_
+- **Caller-saved vs Callee-saved:**
+  - `swtch` 函数被视为一个普通的函数调用，所以编译器会自动处理 caller-saved 寄存器。
+  - 我们只需要在 context 里保存 **Callee-saved (s0-s11)** + **ra** + **sp**。
+- **条件变量范式：**
+  - 必须配合 `mutex` 使用。
+  - 检查条件必须用 `while` 循环（防止虚假唤醒）。
+
+### 内核级线程
+
+Xv6 默认实现了内核级线程, 我们可以看一下:
+
+进程调度的架构是 ProcessA ↔ scheduler ↔ ProcessB
+
+想要放弃 CPU 的进程必须先获得自己的进程锁 `p->lock`，并释放它持有的任何其他锁，更新自己的状态（`p->state`），然后调用 `sched`。这是为了防止多核情况下别的 cpu 看见此时线程是 runnable 就去调用, 导致一个 cpu 读一个写的崩溃情况, 这里的锁是自旋锁 `spinlock`, 意味着如果没有拿到锁就一直 while true 循环等待, 这是因为 shedule 状态系统是临界状态, 我们不希望 cpu 在这个时候睡觉, 所以通过自旋锁把 `proc->state=RUNNABLE` 和 `swtch` 变成一个原子操作, 举个栗子:
+
+**场景假设：**
+
+- **CPU 0** 正在运行进程 A。
+- **CPU 1** 正在运行调度器（Scheduler），试图寻找任务。
+
+**发生了什么：**
+
+1. **CPU 0 (进程 A)** 决定调用 `yield()` 让出 CPU。
+
+   - `yield()` 函数执行：`acquire(&pA->lock);` **(CPU 0 拿到了锁)**
+   - 修改状态：`pA->state = RUNNABLE;`
+   - 调用 `swtch` 切换上下文。
+   - **注意：** 此时进程 A 虽然切走了，但**锁还在 CPU 0 手里**（这是 xv6 的特殊设计，锁跨越了上下文切换）。
+
+2. **CPU 1 (调度器)** 正在遍历进程数组 `proc[]`。
+
+   - 它看到了进程 A。
+   - 它想检查进程 A 是否可以运行。
+   - 它尝试执行：`acquire(&pA->lock);`
+
+3. **自旋发生！**
+   - 因为 CPU 0 还没来得及释放锁（它可能刚切到调度器线程，还没执行到释放锁的代码），CPU 1 发现锁被占用了。
+   - **CPU 1 就会在这里“自旋”**（在一个 `while` 循环里空转），死死盯着这个锁。
+4. **解除自旋：**
+   - CPU 0 切换到了它自己的调度器线程。
+   - 调度器线程会执行清理工作，最终调用 `release(&pA->lock);`。
+   - 一旦 CPU 0 释放了锁，**CPU 1 的循环条件满足**，它立刻拿到锁，停止自旋，然后发现“哦，进程 A 是 RUNNABLE 的”，于是 CPU 1 开始运行进程 A。
+
+一个进程内不能直接切换到 b, 必须切换到 scheduler 才能切换, 这是因为
+
+- 一个进程不能自己杀死自己, 比如如果让进程 a 要 exit 了, 他需要自己清除自己的内核栈, 但是清除了的话, schedule 还要如何工作呢?
+- 简化锁的依赖关系, 减少死锁
+
+![Pasted image 20251120141133](/static/images/lab7-Multithreading/1.png)
+
+#### Scheduler 到底是什么
+
+> 在 xv6 中，`scheduler` **既是**每个 CPU 核心里跑的一段死循环函数，**也是**一个特殊的“内核线程”。
+
+代码上看, sheduler 只是一个死循环函数:
+
+```c
+void
+scheduler(void)
+{
+  struct proc *p;
+  struct cpu *c = mycpu();
+
+  c->proc = 0;
+  for(;;){ // <--- 死循环
+    // 1. 开启中断，防止死锁
+    intr_on();
+
+    // 2. 遍历进程表，找一个 RUNNABLE 的进程
+    for(p = proc; p < &proc[NPROC]; p++) {
+      acquire(&p->lock);
+      if(p->state == RUNNABLE) {
+        // 3. 找到了！准备切换过去
+        p->state = RUNNING;
+        c->proc = p;
+
+        // 4. 关键时刻：上下文切换
+        // 从 scheduler 的上下文切到进程 p 的上下文
+        swtch(&c->context, &p->context);
+
+        // 5. 进程 p 以后调用 yield/sleep 切回来时，会从这里继续执行
+        c->proc = 0;
+      }
+      release(&p->lock);
+    }
+  }
+}
+```
+
+每个 cpu 就是在不断地跑这个函数
+
+但是 scheduler 也更像一个线程, 看 cpu 的结构体
+
+```c
+struct cpu {
+  struct proc *proc;          // The process running on this cpu, or null.
+  struct context context;     // swtch() here to enter scheduler(). <--- 关键！
+  // ...
+};
+```
+
+他也有像是 proc 一样的 `context` 结构体
+
+**切换过程是这样的：**
+
+1. **进程 A 运行中**：CPU 使用进程 A 的内核栈。
+2. **进程 A 让出 CPU (yield)**：
+   - 调用 `swtch(&p->context, &c->context)`。
+   - 意思是：把当前状态保存到进程 A 的 `context` 里，然后**加载 CPU 的 `context`**。
+3. **进入 Scheduler 线程**：
+   - 一旦加载了 `c->context`，CPU 的 `sp` 就指向了该 CPU 的**启动栈**（每个 CPU 启动时分配的独立栈）。
+   - `ra` 指向了 `scheduler()` 函数里的某行代码（通常是 `swtch` 之后的那行）。
+   - 此时，CPU 就在运行 `scheduler` 这个“线程”
+
+然后看下 switch 的过程:
+
+```c
+void swtch(struct context *old, struct context *new);
+```
+
+```asm
+# Context switch
+#
+#   void swtch(struct context *old, struct context *new);
+#
+# Save current registers in old. Load from new.
+
+
+.globl swtch
+swtch:
+        sd ra, 0(a0)
+        sd sp, 8(a0)
+        sd s0, 16(a0)
+        sd s1, 24(a0)
+        sd s2, 32(a0)
+        sd s3, 40(a0)
+        sd s4, 48(a0)
+        sd s5, 56(a0)
+        sd s6, 64(a0)
+        sd s7, 72(a0)
+        sd s8, 80(a0)
+        sd s9, 88(a0)
+        sd s10, 96(a0)
+        sd s11, 104(a0)
+
+        ld ra, 0(a1)
+        ld sp, 8(a1)
+        ld s0, 16(a1)
+        ld s1, 24(a1)
+        ld s2, 32(a1)
+        ld s3, 40(a1)
+        ld s4, 48(a1)
+        ld s5, 56(a1)
+        ld s6, 64(a1)
+        ld s7, 72(a1)
+        ld s8, 80(a1)
+        ld s9, 88(a1)
+        ld s10, 96(a1)
+        ld s11, 104(a1)
+
+        ret
+```
+
+我们要做的就是在用户空间实现 c 级别的 switch, 照喵画咪就好了
+
+必要信息
+
+```c
+// proc.c
+struct proc {
+  struct spinlock lock;
+
+  // p->lock must be held when using these:
+  enum procstate state;        // Process state
+  void *chan;                  // If non-zero, sleeping on chan
+  int killed;                  // If non-zero, have been killed
+  int xstate;                  // Exit status to be returned to parent's wait
+  int pid;                     // Process ID
+
+  // wait_lock must be held when using this:
+  struct proc *parent;         // Parent process
+
+  // these are private to the process, so p->lock need not be held.
+  uint64 kstack;               // Virtual address of kernel stack
+  uint64 sz;                   // Size of process memory (bytes)
+  pagetable_t pagetable;       // User page table
+  struct trapframe *trapframe; // data page for trampoline.S
+  struct context context;      // swtch() here to run process
+  struct file *ofile[NOFILE];  // Open files
+  struct inode *cwd;           // Current directory
+  char name[16];               // Process name (debugging)
+};
+```
+
+---
+
+## 🛠️ Part 1: Uthread
+
+### 1.1 上下文结构设计 (`struct tcontext`)
+
+_文件: `user/uthread.c`_
+
+我设计的结构体包含哪些寄存器？为什么？
+
+```c
+struct ucontext {
+  uint64 ra;
+  uint64 sp;
+
+  // callee-save
+  uint64 s0;
+  uint64 s1;
+  uint64 s2;
+  uint64 s3;
+  uint64 s4;
+  uint64 s5;
+  uint64 s6;
+  uint64 s7;
+  uint64 s8;
+  uint64 s9;
+  uint64 s10;
+  uint64 s11;
+}
+```
+
+> **关键点**：只需 `ra`, `sp`, `s0-s11`。
+
+线程初始化
+
+```c
+void
+thread_create(void (*func)())
+{
+  struct thread *t;
+
+  for (t = all_thread; t < all_thread + MAX_THREAD; t++) {
+    if (t->state == FREE) break; //找到空闲的线程栏位
+  }
+  t->state = RUNNABLE;
+  // 这里我们就要创建线程了
+  // 也就是填写 stack, state和context
+  // 不对, context和stack其实都自动初始化了, 直接去干活就行了吧
+  t->context.ra = (uint64)func;
+  uint64 stack_top = (uint64)t->stack + STACK_SIZE;
+  t->context.sp = stack_top;
+}
+```
+
+这里的栈顶的计算挺有趣的, 栈是从高地址向低地址增长的, 而 C 的内存是从低地址向高地址增长的, 所以有 `uint64 stack_top = (uint64)t->stack + STACK_SIZE`
+
+### 1.2 汇编实现 (`uthread_switch.S`)
+
+_文件: `user/uthread_switch.S`_
+照抄就行
+
+- [x] 实现 `sd` 保存当前线程寄存器 (base: `a0`)。
+- [x] 实现 `ld` 恢复目标线程寄存器 (base: `a1`)。
+
+### 1.3 遇到的问题与调试
+
+- **问题现象**：栈崩了
+  ![20251120_051137_530](/static/images/lab7-Multithreading/2.png)
+
+说我的栈是空的, 哦确实, 忘记初始化 context 的 sp 指针了
+
+- **排查过程**：
+  - `sp` 是否指向了栈的**高地址**（栈底）？
+- **解决方案**：...
+
+![20251120_051151_715](/static/images/lab7-Multithreading/3.png)
+
+Ok, 成功实现, 就是一个切换上下文 + 初始化线程的上下文的操作, 挺有趣的
+
+其实我有个问题, 就是 **我自己写的这些个 context, uthread 不就是玩具吗, 怎么在真正的内核线程上运行的**, 然后我想起来了刚才写的汇编, 通过汇编语句, 真正的修改了底层的寄存器, 完成了线程的切换!
+
+```c
+void
+thread_schedule(void)
+{
+  struct thread *t, *next_thread;
+
+  /* Find another runnable thread. */
+  next_thread = 0;
+  t = current_thread + 1;
+  for(int i = 0; i < MAX_THREAD; i++){
+    if(t >= all_thread + MAX_THREAD)
+      t = all_thread;//环形扫描
+    if(t->state == RUNNABLE) {
+      next_thread = t;
+      break;
+    }
+    t = t + 1;
+  }
+
+  if (next_thread == 0) {
+    printf("thread_schedule: no runnable threads\n");
+    exit(-1);
+  }
+
+  if (current_thread != next_thread) {         /* switch threads?  */
+    next_thread->state = RUNNING;
+    t = current_thread;
+    current_thread = next_thread;
+
+     thread_switch((uint64)&t->context, (uint64)&current_thread->context); <- 在这里!!!
+  } else
+    next_thread = 0;
+}
+```
+
+```bash
+       [ 物理 CPU ]
+            |
+            | 调度 (内核 swtch)
+            v
++---------------------------+
+|      内核线程 (1个)       |  <--- 内核只看得到这一层
++---------------------------+
+            |
+            | 你的 thread_switch (欺骗 CPU 寄存器)
+            v
++-------+-------+-------+
+| thread| thread| thread|      <--- 用户态自己玩的逻辑
+|   A   |   B   |   C   |
++-------+-------+-------+
+```
+
+---
+
+## 🔒 Part 2: Using Threads
+
+### 2.1 竞争条件分析
+
+_文件: `notxv6/ph.c`_
+
+```bash
+toki@Bikiduke:~/course/6081/xv6-labs-2021$ ./ph 1
+100000 puts, 17.627 seconds, 5673 puts/second
+0: 0 keys missing
+100000 gets, 16.792 seconds, 5955 gets/second
+toki@Bikiduke:~/course/6081/xv6-labs-2021$ ./ph 2
+100000 puts, 6.301 seconds, 15872 puts/second
+0: 16558 keys missing
+1: 16558 keys missing
+200000 gets, 16.809 seconds, 11898 gets/second
+toki@Bikiduke:~/course/6081/xv6-labs-2021$ ./ph 3
+ph: notxv6/ph.c:116: main: Assertion `NKEYS % nthread == 0' failed.
+Aborted (core dumped)
+toki@Bikiduke:~/course/6081/xv6-labs-2021$ ./ph 4
+100000 puts, 2.294 seconds, 43595 puts/second
+0: 37012 keys missing
+3: 37012 keys missing
+1: 37012 keys missing
+2: 37012 keys missing
+400000 gets, 13.604 seconds, 29403 gets/second 嗯嗯, 确实有
+```
+
+为什么 `missing keys` 会出现？
+
+> _笔记：当两个线程同时读取 `table[i]` 为空，然后都试图写入，后写入的会覆盖先写入的，导致数据丢失（Lost Update）。_
+
+一点迷思:
+
+```c
+  t0 = now();
+  // 创建线程
+  for(int i = 0; i < nthread; i++) {
+    assert(pthread_create(&tha[i], NULL, get_thread, (void *) (long) i) == 0);
+  }
+  // 等待进程结束退出
+  for(int i = 0; i < nthread; i++) {
+    assert(pthread_join(tha[i], &value) == 0);
+  }
+  t1 = now();
+```
+
+我有个问题, 调用 join 的线程都只有主线程吧, 那如果父进程等待子进程 1, 此时子线程 2 结束了, 但是主线程没收到, 那他下一个等线程 2 的时候不就寄了
+
+回答: 不用担心, 结束了但没被主线程 `join` 的线程叫做僵尸线程, 主线程 join 唤醒的条件一个是线程结束的信号, 另一个就是该线程是僵尸线程
+
+```c
+static
+void put(int key, int value)
+{
+  int i = key % NBUCKET;
+  pthread_mutex_lock(&lock);
+  // is the key already present?
+  struct entry *e = 0;
+  for (e = table[i]; e != 0; e = e->next) {
+    if (e->key == key)
+      break;
+  }
+  if(e){
+    // update the existing key.
+    e->value = value;
+  } else {
+    // the new is new.
+
+    insert(key, value, &table[i], table[i]);
+    // 一开始在这里加了锁, 导致如果找到了条目就走出去, 没有释放锁, 直接死锁
+  }
+  pthread_mutex_unlock(&lock);
+
+}
+```
+
+单线程:
+![20251124_091123_797](/static/images/lab7-Multithreading/4.png)
+
+默认多线程
+![Pasted image 20251124203402](/static/images/lab7-Multithreading/5.png)
+
+加锁了的多线程
+![Pasted image 20251124203408](/static/images/lab7-Multithreading/6.png)
+
+全局锁比单线程还慢
+
+### 2.2 锁的粒度优化
+
+- **方案 A (全局大锁)**: 安全但慢。`puts/sec` = 4421
+- **方案 B (每桶一锁)**: 安全且快。`puts/sec` = 42820
+  - 为什么方案 B 更快？因为不同桶的操作互不干扰，可以**并行**执行。
+
+```c
+static
+void put(int key, int value)
+{
+  int i = key % NBUCKET;
+  // 每个桶对一个锁
+  pthread_mutex_t lock = locks[i];
+  pthread_mutex_lock(&lock);
+  // is the key already present?
+  struct entry *e = 0;
+  for (e = table[i]; e != 0; e = e->next) {
+    if (e->key == key)
+      break;
+  }
+  if(e){
+    // update the existing key.
+    e->value = value;
+  } else {
+    // the new is new.
+
+    insert(key, value, &table[i], table[i]);
+
+  }
+  pthread_mutex_unlock(&lock);
+
+}
+```
+
+为啥加锁了还会丢失键??
+![20251124_081152_163](/static/images/lab7-Multithreading/7.png)
+
+别急, 静静思考
+
+操了, 是 c 的值传递, c 的结构体默认是拷贝复制, 我应该直接传数组元素的地址!
+
+![20251124_091122_961](/static/images/lab7-Multithreading/8.png)
+
+> Woc, 速度增快了十倍!
+> 原因是增加了非常多的上下文切换开销, 而且本质上也就是一个单线程
+>
+> ![20251124_091110_493](/static/images/lab7-Multithreading/9.png)
+
+---
+
+## 🔒 Part 3: Xv6 locks
+
+插播一下Xv6 的锁机制演变机制, 对于我们后续做 barrier 很有用
+
+首先我们需要一个信号量, 需要一个非自旋锁可以让出 cpu 的机制
+
+让我们想象一对调用，`sleep`和`wakeup`，工作流程如下。`Sleep(chan)`在任意值`chan`上睡眠，称为等待通道（wait channel）。`Sleep`将调用进程置于睡眠状态，释放CPU用于其他工作。`Wakeup(chan)`唤醒所有在`chan`上睡眠的进程（如果有），使其`sleep`调用返回。如果没有进程在`chan`上等待，则`wakeup`不执行任何操作。我们可以将信号量实现更改为使用`sleep`和`wakeup`：
+
+```c
+void V(struct semaphore* s) {
+    acquire(&s->lock);
+    s->count += 1;
+    wakeup(s);  // !pay attention
+    release(&s->lock);
+}
+
+void P(struct semaphore* s) {
+    while (s->count == 0) //<- 运行到这里
+        sleep(s);  // !pay attention
+    acquire(&s->lock);
+    s->count -= 1;
+    release(&s->lock);
+}
+```
+
+但是仔细看! 这样的机制是错误了, 因为假设消费者 P 运行到了第一行, 检测此时 count 确等于 0, 进入的这一个瞬间, cpu 中断来了, 切换到生产者给 count++, 这是可以做到的, 但是呢, 切回来 P 发现: woc, P 执行内部丢失了同时发生的 V, 这显然是错误的, 这是因为判断 `count==0` 和 `sleep` 需要是一个原子操作
+
+`V` 在错误的时刻运行，违反了 `P` 仅在 `s->count==0` 时才休眠的不变量。保护不变量的一种不正确的方法是将锁的获取（下面以黄色突出显示）移动到 `P` 中，以便其检查 `count` 和调用 `sleep` 是原子的
+
+```c
+void V(struct semaphore* s) {
+    acquire(&s->lock);
+    s->count += 1;
+    wakeup(s);
+    release(&s->lock);
+}
+
+void P(struct semaphore* s) {
+    acquire(&s->lock);  // !pay attention
+    while (s->count == 0)
+        sleep(s);
+    s->count -= 1;
+    release(&s->lock);
+}
+```
+
+那么在 P 一开始就尝试获取锁如何呢? 看起来很美妙, 但是仔细想想, P 进入, 获取锁, count=0, 睡觉
+生产者: ?? 你把 s 锁住了我还怎么生产, 直接死锁
+
+```c
+void V(struct semaphore* s) {
+    acquire(&s->lock);
+    s->count += 1;
+    wakeup(s);
+    release(&s->lock);
+}
+
+void P(struct semaphore* s) {
+    acquire(&s->lock);          // 1. 拿锁：我要检查资源了
+
+    while (s->count == 0)       // 2. 循环检查：没资源就一直等
+        sleep(s, &s->lock);     // 3. 睡觉：关键的一步！
+
+    s->count -= 1;              // 4. 消费：拿走一个资源
+    release(&s->lock);          // 5. 放锁：完事
+}
+```
+
+来看看正确版本的实现, 这 idea 简直绝了
+
+看 p: sleep 的时候传进去 s 的锁, 既然消费者睡觉了, 那你就不用拿锁了好嘛, 醒了的话再给你锁, 所以在 sleep 开始时释放锁, 结束时重新获取锁, 换句话说, `sleep` 函数内部会做两件事（逻辑原子性）：
+
+- 把当前进程状态设为 `SLEEPING`。
+- **释放** `s->lock`（这样 V 才能进来）。
+- **当 P 醒来（从 sleep 返回）之前**，它会**重新尝试获取** `s->lock`。
+
+最巧妙的是: `while`, 为啥不用 if 要用 while?
+
+想象 s 的等待队列上其实是有很多等待的线程的, 每次调用 wakeup 其实是把全部的等待者全部唤醒, 但是能得到锁的只有一个, 所以就让等待者自己去抢锁, 抢到的就使用资源, 再释放锁, 但是抢到了锁就一定能使用资源吗? 很有可能**前人已经把资源用完了**, 这就是 while 的语义, 如果没资源就继续睡觉吧!
+
+再看看 sleep 和 wakeup 的具体实现
+
+```c
+void
+sleep(void *chan, struct spinlock *lk) //这里的参数和上面是对应的, 非常巧妙
+{
+  struct proc *p = myproc();
+
+  // Must acquire p->lock in order to
+  // change p->state and then call sched.
+  // 因为需要改变p->state, 所以必须先获得p->lock.
+  // 只要在持有p->lock的情况下调用sched, 就不会被中断, 从而错过唤醒
+  // Once we hold p->lock, we can be
+  // guaranteed that we won't miss any wakeup
+  // (wakeup locks p->lock),
+  // so it's okay to release lk.
+
+  acquire(&p->lock);  //DOC: sleeplock1
+  release(lk);
+
+  // Go to sleep.
+  p->chan = chan;
+  // 我们希望的是一些操作保持原子性, 比如 修改状态+让出cpu 不能中断, 否则会丢失唤醒信号
+  p->state = SLEEPING;
+
+  sched();//让出cpu,安详的睡眠
+
+  // 后续当scheduler成功swtch之后才会释放p->lock
+
+  // Tidy up.清除通道记录
+  p->chan = 0;
+
+  // Reacquire original lock.
+  release(&p->lock);
+  acquire(lk);
+}
+```
+
+```c
+// Wake up all processes sleeping on chan.
+// Must be called without any p->lock.
+void
+wakeup(void *chan)
+{
+  struct proc *p;
+
+  for(p = proc; p < &proc[NPROC]; p++) {
+    if(p != myproc()){
+      acquire(&p->lock);
+      if(p->state == SLEEPING && p->chan == chan) {
+        p->state = RUNNABLE;
+      }
+      release(&p->lock);
+    }
+  }
+}
+```
+
+这里就没啥了, 就是按顺序唤醒所有在 `chan` 上睡觉的进程
+
+## 🚧 Part 4: Barrier
+
+### 4.1 逻辑梳理
+
+_文件: `notxv6/barrier.c`_
+
+目标：所有线程都到达 `barrier()` 后，才能一起通过，并且进入下一轮。
+
+**核心难点：** 如何防止“跑得快”的线程在其他线程还没离开上一轮 `barrier` 时就修改了状态？
+
+- 解决方案：引入局部变量 `cur_round` 记录当前轮次，并使用 `while (bstate.round == cur_round)` 进行等待。
+
+### 4.2 实现代码
+
+第一个版本:
+
+```c
+static void
+barrier()
+{
+  // YOUR CODE HERE
+  //
+  // Block until all threads have called barrier() and
+  // then increment bstate.round.
+  //
+  pthread_mutex_lock(&bstate.barrier_mutex);
+  bstate.nthread ++;
+  if(bstate.nthread == nthread){
+    pthread_cond_broadcast(&bstate.barrier_cond);
+    bstate.round++;
+    bstate.nthread = 0;
+  }
+  while (bstate.nthread < nthread){
+    pthread_cond_wait(&bstate.barrier_cond, &bstate.barrier_mutex);
+  }
+
+  pthread_mutex_unlock(&bstate.barrier_mutex);
+
+}
+```
+
+直接自己锁死自己, 太 sb 了
+
+Version2
+
+```c
+static void
+barrier()
+{
+  pthread_mutex_lock(&bstate.barrier_mutex);
+  bstate.nthread ++;
+  while (bstate.nthread < nthread){
+    pthread_cond_wait(&bstate.barrier_cond, &bstate.barrier_mutex);
+  }
+  if(bstate.nthread == nthread){
+    pthread_cond_broadcast(&bstate.barrier_cond);
+    bstate.round++;
+    bstate.nthread = 0;
+  }
+
+
+  pthread_mutex_unlock(&bstate.barrier_mutex);
+
+}
+```
+
+依旧是死锁这一块
+![20251124_091134_760](/static/images/lab7-Multithreading/10.png)
+
+没辙了, 随便试试, 把 while 换成 if?
+
+```c
+static void
+barrier()
+{
+  pthread_mutex_lock(&bstate.barrier_mutex);
+  bstate.nthread ++;
+  if (bstate.nthread < nthread){
+    pthread_cond_wait(&bstate.barrier_cond, &bstate.barrier_mutex);
+  }
+  if(bstate.nthread == nthread){
+    pthread_cond_broadcast(&bstate.barrier_cond);
+    bstate.round++;
+    bstate.nthread = 0;
+  }
+
+  pthread_mutex_unlock(&bstate.barrier_mutex);
+
+}
+```
+
+居然通过了!
+![20251124_091122_993](/static/images/lab7-Multithreading/11.png)
+
+仔细思考:
+
+```c
+static void
+barrier()
+{
+  pthread_mutex_lock(&bstate.barrier_mutex);
+  bstate.nthread ++;
+  if (bstate.nthread < nthread){
+    pthread_cond_wait(&bstate.barrier_cond, &bstate.barrier_mutex);
+    // 对了, 我一直在想这里为啥是if
+    // 因为之前学的管程的实现就是先while, 再睡觉
+    // 但是我忽视的是: 在这里我是先对共享资源进行了++, 再去检测的
+    // 他们睡觉的原因不是没资源, 而是需要等到下一轮!
+    // 所以醒来的兄弟也不用继续抢资源了, 直接去下一轮即可!
+  }
+  if(bstate.nthread == nthread){
+    pthread_cond_broadcast(&bstate.barrier_cond);
+    bstate.round++;
+    bstate.nthread = 0;
+  }
+  pthread_mutex_unlock(&bstate.barrier_mutex);
+}
+```
+
+但是! Gemini 说**我的代码只是通过了测试, 但是有安全隐患**, 因为 os 会有一种操作叫做**虚假唤醒**:
+让我们模拟一次 **虚假唤醒** 的灾难现场：
+
+假设 `nthread = 2`。
+
+1. **线程 A** 到了。`nthread` 变成 1。
+2. **线程 A** 进 `if`，调用 `wait` 睡觉。
+3. **【意外发生】**：操作系统因为某种调度原因（比如接收到一个 Signal），把 **线程 A** 叫醒了！
+   - 注意：此时 **线程 B 还没来**。`nthread` 依然是 1。
+4. **线程 A** 从 `wait` 返回。因为你没有 `while` 循环复查条件，它直接往下走。
+5. **线程 A** 检查下面的 `if (nthread == 2)`。条件不成立（1 != 2）。
+6. **线程 A** `unlock`，**冲出了屏障！**
+   - **结果**：线程 A 开始跑第二圈了，而线程 B 连第一圈的屏障都还没进。
+   - **屏障语义彻底失效**。
+
+确实, 我们不能完全相信 `wait` 的语义的话, 就必须自己用 while 去检查, 只有当真的进入下一轮了才能跳出
+
+```c
+static void
+barrier()
+{
+  pthread_mutex_lock(&bstate.barrier_mutex);
+  bstate.nthread ++;
+  int cur_round = bstate.round;
+  while (bstate.nthread < nthread){
+    pthread_cond_wait(&bstate.barrier_cond, &bstate.barrier_mutex);
+    // 98分 版本:
+    // 还是需要不断while检测是否已满(避免虚假唤醒), 但是为了防止死锁
+    // 我们让穿越了不同round的直接跳出
+    // 但是我忽视的是: 在这里我是先对共享资源进行了++, 再去检测的
+    // 他们睡觉的原因不是没资源, 而是需要等到下一轮!
+    // 所以醒来的兄弟也不用继续抢资源了, 直接去下一轮即可!
+    if (bstate.round > cur_round) break;
+  }
+  if(bstate.nthread == nthread){
+    pthread_cond_broadcast(&bstate.barrier_cond);
+    bstate.round++;
+    bstate.nthread = 0;
+  }
+
+  pthread_mutex_unlock(&bstate.barrier_mutex);
+}
+```
+
+分两种情况:
+
+1. 虚假唤醒, 此时bstate.nthread是有效的, while条件生效
+2. 真的下一轮了, 此时break, 合理
+
+顺便附上 gemini 说的优雅方案, 其实程序的行为在一开始就完全确定了, 所以可以直接分流:
+
+```c
+static void
+barrier()
+{
+  pthread_mutex_lock(&bstate.barrier_mutex);
+
+  bstate.nthread++;
+
+  // 核心分歧点：我是 Leader 还是 Follower？
+  if (bstate.nthread == nthread) {
+    // === Leader 逻辑 ===
+    bstate.round++;
+    bstate.nthread = 0;
+    pthread_cond_broadcast(&bstate.barrier_cond);
+  } else {
+    // === Follower 逻辑 ===
+    int my_round = bstate.round;
+    // 直接检测轮次，语义更清晰：只要轮次没变，我就不走
+    while (bstate.round == my_round) {
+      pthread_cond_wait(&bstate.barrier_cond, &bstate.barrier_mutex);
+    }
+  }
+
+  pthread_mutex_unlock(&bstate.barrier_mutex);
+}
+```
+
+确实比我的方案优雅一些, 因为我的思路有点绕, 用了一个 if 来打补丁他就直接
+
+### 4.3 验证与测试
+
+- 运行 `./barrier 2` 结果：passed
+  ![20251124_101123_265](/static/images/lab7-Multithreading/12.png)
+
+---
+
+## 💡 总结与反思
+
+1. **Context Switch**：其实就是保存一组寄存器(这里是保存到内存里, 但是内核线程需要保存到 PCB 里)，再加载另一组，然后 `ret` 到 `ra`。对于 CPU 来说，它并不知道“线程”的概念，它只是在执行指令流。
+2. **锁的权衡**：锁能保证正确性，但粗暴的锁会扼杀并行性能, 甚至不如单线程。缩小锁的粒度是优化的关键。
+3. **条件变量**：`cond_wait` 必须原子地“释放锁+睡眠”，醒来后“重新拿锁”。这个过程一定要使用 while 去检测条件是否成立, sleep 和 broadcast 就是 c 里的管程
+
+---
+
+## 🔗 参考资料
+
+- https://xv6.dgs.zone/labs/requirements/lab7.html
+- https://blog.miigon.net/posts/s081-ending/

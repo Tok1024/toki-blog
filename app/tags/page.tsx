@@ -12,24 +12,27 @@ export default async function Page() {
   const sortedTags = tagKeys.sort((a, b) => tagCounts[b] - tagCounts[a])
   return (
     <>
-      <div className="flex flex-col items-start justify-start divide-y divide-gray-200 md:mt-24 md:flex-row md:items-center md:justify-center md:space-x-6 md:divide-y-0 dark:divide-gray-700">
-        <div className="space-x-2 pt-6 pb-8 md:space-y-5">
-          <h1 className="text-3xl leading-9 font-extrabold tracking-tight text-gray-900 sm:text-4xl sm:leading-10 md:border-r-2 md:px-6 md:text-6xl md:leading-14 dark:text-gray-100">
+      <div className="space-y-8">
+        <div className="space-y-2 pt-6 pb-8 md:space-y-5">
+          <h1 className="text-3xl leading-9 font-extrabold tracking-tight text-gray-900 sm:text-4xl sm:leading-10 md:text-6xl md:leading-14 dark:text-gray-100">
             Tags
           </h1>
         </div>
-        <div className="flex max-w-lg flex-wrap">
+        <div className="flex flex-wrap gap-4">
           {tagKeys.length === 0 && 'No tags found.'}
           {sortedTags.map((t) => {
             return (
-              <div key={t} className="mt-2 mr-5 mb-2">
+              <div
+                key={t}
+                className="flex items-center rounded-full border border-gray-200 bg-white px-4 py-2 shadow-sm transition hover:shadow-md dark:border-gray-800 dark:bg-gray-900/70"
+              >
                 <Tag text={t} />
                 <Link
                   href={`/tags/${slug(t)}`}
-                  className="-ml-2 text-sm font-semibold text-gray-600 uppercase dark:text-gray-300"
+                  className="ml-1 text-sm font-semibold text-gray-600 dark:text-gray-300"
                   aria-label={`View posts tagged ${t}`}
                 >
-                  {` (${tagCounts[t]})`}
+                  {`(${tagCounts[t]})`}
                 </Link>
               </div>
             )

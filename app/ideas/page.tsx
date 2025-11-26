@@ -38,7 +38,7 @@ export default async function Page() {
           {list.map((it) => (
             <article
               key={it.id}
-              className="mx-auto max-w-5xl overflow-hidden rounded-lg border border-sky-100 bg-gradient-to-r from-green-50 to-sky-100 p-6 text-gray-800 dark:border-gray-700 dark:from-slate-800/60 dark:to-slate-900"
+              className="mx-auto max-w-5xl overflow-hidden rounded-3xl border border-gray-200/60 bg-white p-6 shadow-sm transition hover:shadow-md dark:border-gray-800/60 dark:bg-gray-900/70"
             >
               <div className="flex items-start justify-between gap-4">
                 <h3 className="text-lg leading-tight font-semibold">{it.title}</h3>

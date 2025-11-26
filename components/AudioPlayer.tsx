@@ -89,9 +89,11 @@ export default function AudioPlayer({
   }
 
   const progressPercentage = duration ? (currentTime / duration) * 100 : 0
+  const primaryColor = 'var(--color-primary-500)'
+  const primaryTint = 'var(--color-primary-100)'
 
   return (
-    <div className="my-8 w-full rounded-2xl border border-white/40 bg-white/10 ring-1 shadow-2xl shadow-black/10 ring-black/5 backdrop-blur-xl dark:border-white/20 dark:bg-white/5">
+    <div className="glass-card via-primary-50/60 ring-primary-100/70 my-8 w-full rounded-2xl bg-gradient-to-r from-white/85 to-white/85 shadow-xl dark:from-gray-900 dark:via-gray-900/60 dark:to-gray-900">
       <audio ref={audioRef} src={src} preload="metadata">
         <track kind="captions" />
       </audio>
@@ -108,7 +110,7 @@ export default function AudioPlayer({
             />
           </div>
         ) : (
-          <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+          <div className="from-primary-500 to-primary-400 flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-md bg-gradient-to-br text-white shadow-inner">
             <svg className="h-8 w-8" fill="currentColor" viewBox="0 0 20 20">
               <path
                 fillRule="evenodd"
@@ -120,13 +122,13 @@ export default function AudioPlayer({
         )}
 
         <div className="min-w-0 flex-1">
-          <p className="truncate font-medium text-gray-900 dark:text-white/90">{title}</p>
-          <p className="truncate text-sm text-gray-600 dark:text-white/60">{artist}</p>
+          <p className="text-primary-900 dark:text-primary-100 truncate font-medium">{title}</p>
+          <p className="text-primary-700/80 dark:text-primary-100/80 truncate text-sm">{artist}</p>
         </div>
 
         <button
           onClick={togglePlay}
-          className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-blue-600 text-white ring-2 transition hover:bg-blue-700 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none dark:focus:ring-offset-gray-800"
+          className="bg-primary-600 ring-primary-200 hover:bg-primary-700 focus:ring-primary-300 dark:bg-primary-500 dark:hover:bg-primary-400 dark:ring-primary-900/40 dark:focus:ring-primary-700 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full text-white ring-2 transition focus:ring-4 focus:ring-offset-2 focus:outline-none dark:focus:ring-offset-gray-900"
           aria-label={isPlaying ? '暂停' : '播放'}
         >
           {isPlaying ? (
@@ -150,11 +152,11 @@ export default function AudioPlayer({
       </div>
 
       <div className="px-4 pb-4">
-        <div className="mb-2 flex items-center justify-between text-xs text-gray-600 dark:text-white/50">
+        <div className="text-primary-700/80 dark:text-primary-100/70 mb-2 flex items-center justify-between text-xs">
           <span>{formatTime(currentTime)}</span>
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="flex items-center gap-1 text-gray-700 hover:text-gray-900 dark:text-white/70 dark:hover:text-white"
+            className="text-primary-800 hover:text-primary-900 dark:text-primary-100 flex items-center gap-1 dark:hover:text-white"
           >
             {isExpanded ? '收起' : '展开'}
             {isExpanded ? (
@@ -176,25 +178,25 @@ export default function AudioPlayer({
             onChange={handleProgressChange}
             className="absolute inset-0 h-2 w-full cursor-pointer"
             style={{
-              background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${progressPercentage}%, rgba(255,255,255,0.3) ${progressPercentage}%, rgba(255,255,255,0.3) 100%)`,
+              background: `linear-gradient(to right, ${primaryColor} 0%, ${primaryColor} ${progressPercentage}%, rgba(255,255,255,0.35) ${progressPercentage}%, rgba(255,255,255,0.35) 100%)`,
             }}
           />
         </div>
       </div>
 
       {isExpanded && (
-        <div className="border-t border-white/10 px-4 py-3 dark:border-white/10">
+        <div className="border-primary-100/60 dark:border-primary-900/40 border-t px-4 py-3">
           <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-700 dark:text-white/70">🔊</span>
+            <span className="text-primary-800 dark:text-primary-100 text-sm">🔊</span>
             <input
               type="range"
               min="0"
               max="100"
               value={volume * 100}
               onChange={handleVolumeChange}
-              className="h-2 w-32 cursor-pointer appearance-none rounded-lg bg-white/30 dark:bg-white/10"
+              className="bg-primary-50/60 h-2 w-32 cursor-pointer appearance-none rounded-lg dark:bg-white/10"
               style={{
-                background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${volume * 100}%, rgba(255,255,255,0.3) ${volume * 100}%, rgba(255,255,255,0.3) 100%)`,
+                background: `linear-gradient(to right, ${primaryColor} 0%, ${primaryColor} ${volume * 100}%, ${primaryTint} ${volume * 100}%, ${primaryTint} 100%)`,
               }}
             />
           </div>

@@ -7,20 +7,15 @@ import ThemeSwitch from './ThemeSwitch'
 import SearchButton from './SearchButton'
 
 const Header = () => {
-  // 使 header 与 body 背景一致（淡蓝），暗色模式使用深色背景
-  let headerClass =
-    'flex items-center w-full justify-between min-h-[120px] py-10 pb-16 bg-sky-50 dark:bg-gray-900'
-  if (siteMetadata.stickyNav) {
-    headerClass += ' sticky top-0 z-50'
-  }
-
   return (
-    <header className={headerClass}>
-      {/* 保持内部元素透明，不要额外的 bg-white */}
+    <header className="glass-card via-primary-50/70 ring-primary-100/70 sticky top-4 z-50 mb-8 flex items-center justify-between rounded-3xl bg-gradient-to-r from-white/85 to-white/85 px-6 py-4 shadow-md transition-all dark:from-gray-900/80 dark:via-gray-900/70 dark:to-gray-900/80">
       <Link href="/" aria-label={siteMetadata.headerTitle}>
         <div className="flex items-center justify-between">
+          <div className="mr-3">
+            <Logo className="fill-primary-700 dark:fill-primary-200 h-8 w-auto" />
+          </div>
           {typeof siteMetadata.headerTitle === 'string' ? (
-            <div className="hidden h-6 text-2xl font-semibold sm:block">
+            <div className="text-primary-800 dark:text-primary-100 hidden h-6 text-xl font-bold tracking-wide sm:block">
               {siteMetadata.headerTitle}
             </div>
           ) : (
@@ -28,7 +23,7 @@ const Header = () => {
           )}
         </div>
       </Link>
-      <div className="flex items-center space-x-4 leading-5 sm:-mr-6 sm:space-x-6">
+      <div className="flex items-center space-x-4 leading-5 sm:space-x-6">
         <div className="no-scrollbar hidden max-w-40 items-center gap-x-4 overflow-x-auto sm:flex md:max-w-72 lg:max-w-96">
           {headerNavLinks
             .filter((link) => link.href !== '/')
@@ -36,7 +31,7 @@ const Header = () => {
               <Link
                 key={link.title}
                 href={link.href}
-                className="hover:text-primary-500 dark:hover:text-primary-400 m-1 font-medium text-gray-900 dark:text-gray-100"
+                className="text-primary-800 hover:text-primary-600 dark:text-primary-100 dark:hover:text-primary-200 font-medium transition"
               >
                 {link.title}
               </Link>

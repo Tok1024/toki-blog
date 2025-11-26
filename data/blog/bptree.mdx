@@ -1,14 +1,14 @@
 ---
-title: "用ts手搓一个b+树"
+title: '用ts手搓一个b+树'
 date: 2025-11-15
 lastmod: 2025-11-15
 tags: ['data-structure', 'database']
-summary: "在gpt的帮助下, 使用typescript手搓一个b+tree"
+summary: '在gpt的帮助下, 使用typescript手搓一个b+tree'
 images: []
 draft: false
-authors: ["default"]
+authors: ['default']
 layout: PostLayout
-canonicalUrl: ""
+canonicalUrl: ''
 ---
 
 ## 原理
@@ -21,7 +21,7 @@ canonicalUrl: ""
 B+tree 基本上就是 b 树, 不同点在于在 B+tree 的**内部节点只存键和指针，所有真实数据只存在叶子节点**。这是 B+Tree 相比 B-Tree 的核心差别。
 
 ![20251115_051142_461](/static/images/bplustree/20251115_051142_461.png)
-*回忆一下 cs61B 讲过的数据结构*
+_回忆一下 cs61B 讲过的数据结构_
 
 B+tree 提供了一个及其平衡且公平的搜索, 使得每个节点有着差不多的深度, 整个树保持了高度平衡, 带来的是理想情况下的 BST 或者二分查找的 `log (N)` 速度
 
@@ -81,6 +81,7 @@ B+tree 的阶 Order 规定了最大子节点数量和内部节点的最大 key �
 ### 总结
 
 简单来说, b+tree 就是一种简单有效的数据结构, 通过
+
 - 始终维持自平衡 (order 的限制)
 - 只在子节点存储数据指针
 - 把叶子节点连接在一起
@@ -91,8 +92,7 @@ B+tree 的阶 Order 规定了最大子节点数量和内部节点的最大 key �
 
 除此之外, b+tree 还有别的优势
 
-- **磁盘访问优化**：  由于数据库中的数据存储存在磁盘上，而磁盘的读取性能远远低于内存。B+ 树在设计时特别考虑了磁盘存取的效率，它的 **广度优先** 结构使得每次查找时，磁盘的随机访问最小化。与传统的链表或平衡二叉树相比，B+ 树能够有效减少磁盘的 I/O 次数。
-    
+- **磁盘访问优化**： 由于数据库中的数据存储存在磁盘上，而磁盘的读取性能远远低于内存。B+ 树在设计时特别考虑了磁盘存取的效率，它的 **广度优先** 结构使得每次查找时，磁盘的随机访问最小化。与传统的链表或平衡二叉树相比，B+ 树能够有效减少磁盘的 I/O 次数。
 - **支持多重索引**：在数据库中，可能会根据不同的列建立多个索引，每个索引通常是一个 B+ 树。通过组合这些索引，数据库能够更加高效地执行复杂的查询。
 
 ## 实现
@@ -100,59 +100,64 @@ B+tree 的阶 Order 规定了最大子节点数量和内部节点的最大 key �
 接下来我将用 Typescript 实现一下 b+tree, 为什么要用 ts? 我不知道, 只是最近 ts 用的多比较顺手吧
 
 首先我们让 gpt 给我们生成一个项目骨架:
+
 ```ts
 class BPlusNode {
-  public keys: Key[];
-  public children: BPlusNode[];
-  public leaf: boolean;
+  public keys: Key[]
+  public children: BPlusNode[]
+  public leaf: boolean
 
-  constructor(public order: number, opts?: { leaf?: boolean }) {
-    this.keys = [];
-    this.children = [];
-    this.leaf = opts?.leaf ?? true;
+  constructor(
+    public order: number,
+    opts?: { leaf?: boolean }
+  ) {
+    this.keys = []
+    this.children = []
+    this.leaf = opts?.leaf ?? true
   }
 }
 ```
 
 然后看一下树的骨架
+
 ```ts
 export class BPlusTree {
-  root: BPlusNode;
-  splitCount = 0;
+  root: BPlusNode
+  splitCount = 0
 
   constructor(public order = 4) {
-    if (order < 2) throw new Error('order must be >= 2');
-    this.root = new BPlusNode(order, { leaf: true });
+    if (order < 2) throw new Error('order must be >= 2')
+    this.root = new BPlusNode(order, { leaf: true })
   }
 
   /** TODO[Insert]: 完成公开插入逻辑（根满 → split → insertNonFull）。 */
   insert(key: Key) {
-    throw new Error('TODO[Insert]: implement insert');
+    throw new Error('TODO[Insert]: implement insert')
   }
 
   /** TODO[FindLeaf]: 沿 children 找到应插入的叶节点。 */
   private findLeaf(node: BPlusNode, key: Key): BPlusNode {
-    throw new Error('TODO[FindLeaf]: implement findLeaf');
+    throw new Error('TODO[FindLeaf]: implement findLeaf')
   }
 
   /** TODO[InsertNonFull]: 在非满节点中插入；若 child 满则 split 再递归。 */
   private insertNonFull(node: BPlusNode, key: Key) {
-    throw new Error('TODO[InsertNonFull]: implement insertNonFull');
+    throw new Error('TODO[InsertNonFull]: implement insertNonFull')
   }
 
   /** TODO[SplitChild]: 分裂 childIndex 处的子节点，将中间键提升到 parent。 */
   private splitChild(parent: BPlusNode, childIndex: number) {
-    throw new Error('TODO[SplitChild]: implement splitChild');
+    throw new Error('TODO[SplitChild]: implement splitChild')
   }
 
   /** 读取树高（根为 1）。 */
   height(node: BPlusNode = this.root): number {
-    let h = 1;
+    let h = 1
     while (!node.leaf) {
-      node = node.children[0];
-      h++;
+      node = node.children[0]
+      h++
     }
-    return h;
+    return h
   }
 }
 ```
@@ -166,18 +171,18 @@ export class BPlusTree {
 还是有点模糊? 让我们思考一下整个过程的不变量 invirants
 
 1. 递归前提不变量
-     调用 insertNonFull(node, key) 时，`node.keys.length < 2*order-1` 始终成立。也就是说，insertNonFull 只接手“尚未满”的节点。根若满，会在公共 insert 入口先 split，然后才递归；中间任何 child 若满，都在往下递归前 split。
+   调用 insertNonFull(node, key) 时，`node.keys.length < 2*order-1` 始终成立。也就是说，insertNonFull 只接手“尚未满”的节点。根若满，会在公共 insert 入口先 split，然后才递归；中间任何 child 若满，都在往下递归前 split。
 2. 子树容量不变量
-     递归访问某个 child 时，保证“进入子树前该 child 已经被 split 掉所有满节点”，因此真正传给下一层的节点仍然是“非满”的。换句话说：
-     - 对于每条递归路径：父节点处理 child 之前都会确认 child 不满
-     - 这确保了递归到底的叶子插入不会再触发上溢，**所有分裂都在沿途被即时处理**。
+   递归访问某个 child 时，保证“进入子树前该 child 已经被 split 掉所有满节点”，因此真正传给下一层的节点仍然是“非满”的。换句话说：
+   - 对于每条递归路径：父节点处理 child 之前都会确认 child 不满
+   - 这确保了递归到底的叶子插入不会再触发上溢，**所有分裂都在沿途被即时处理**。
 
 有了这两个不变量，整个调用链就像这样：
 
-  - 从根开始，若根满则 split。
-  - 找到应去的 child，若 child 满则立刻 split 并决定继续走左还是右子节点。
-  - 递归调用 child（此时 child 已不满）。
-  - 在叶子插入时一定有空位，只需 splice。
+- 从根开始，若根满则 split。
+- 找到应去的 child，若 child 满则立刻 split 并决定继续走左还是右子节点。
+- 递归调用 child（此时 child 已不满）。
+- 在叶子插入时一定有空位，只需 splice。
 
 任何分裂（上溢）都会当场“父节点承担”，而不会等到递归返回再处理，这就是为什么递归包裹整个调用链的写法最简单也最安全。
 
@@ -213,14 +218,17 @@ private insertNonFull(node: BPlusNode, key: Key) {
 然后就是最难的 `splitChild` 方法了, 我们需要把一个子节点分裂, 并把对应的 key 添加到父节点里
 
 这里有个坑:
+
 - 如果 child 是叶子节点, 那么上升的那个元素要保留
 - 如果 child 是内部节点, 上升的元素直接交给父节点, 新的节点不再保留
 
 然后要确定中间节点的索引, 其实是固定的, 用这里的定义（order=t，节点最多 `2*t-1` 个键），中间位置就是 t-1，也就是偏左的那个索引。原因：
+
 - 节点满时有 `2*t-1` 个键，按照 B 树/B+ 树的经典定义，split 后左子节点拿 t-1 个键，中间第 t 个键上升到父节点，右子节点拿剩余 t-1 个键。
 - 因为键数是奇数，选 t-1 刚好能“左边和右边都等大”，既不会让任一子节点少于 t-1 个键，又能符合 `t-1 ≤ keys ≤ 2*t-1` 的约束。
 
 然后就能写 `splitChild` 方法了
+
 ```ts
 private splitChild(parent: BPlusNode, childIndex: number) {
    this.splitCount++;
@@ -256,6 +264,7 @@ private splitChild(parent: BPlusNode, childIndex: number) {
 ![Pasted image 20251115153617](/static/images/bplustree/Pasted image 20251115153617.png)
 
 奶奶滴, 分裂之后父节点的 keys 也变了, 要重新查一下位置!
+
 ```ts
 private insertNonFull(node: BPlusNode, key: Key) {
   /**
@@ -309,14 +318,14 @@ private insertNonFull(node: BPlusNode, key: Key) {
 ```ts
 // 闭区间版本
 function lowerBoundClosed(keys: number[], key: number) {
-  let lo = 0;
-  let hi = keys.length - 1; // hi 为最后索引，区间是 [lo, hi]
+  let lo = 0
+  let hi = keys.length - 1 // hi 为最后索引，区间是 [lo, hi]
   while (lo <= hi) {
-    const mid = (lo + hi) >>> 1;
-    if (keys[mid] < key) lo = mid + 1;
-    else hi = mid - 1;
+    const mid = (lo + hi) >>> 1
+    if (keys[mid] < key) lo = mid + 1
+    else hi = mid - 1
   }
-  return lo; // 插入位置（同样是 0..length）
+  return lo // 插入位置（同样是 0..length）
 }
 ```
 
@@ -370,7 +379,7 @@ private findLeaf(node: BPlusNode, key: Key): BPlusNode {
 
 ![20251115_041135_643](/static/images/bplustree/20251115_041135_643.png)
 
-通过了全部测试! 
+通过了全部测试!
 
 ## 总结
 
@@ -384,19 +393,19 @@ private findLeaf(node: BPlusNode, key: Key): BPlusNode {
 
 **order = 4**
 
-|size|total time|ops/s|avgInsert|avgSearch|height|splits|
-|---|---|---|---|---|---|---|
-|1000|2.24ms|~445k|2245ns|1251ns|5|247|
-|5000|6.05ms|~826k|1210ns|433ns|5|1230|
-|20000|31.10ms|~643k|1555ns|416ns|6|5034|
+| size  | total time | ops/s | avgInsert | avgSearch | height | splits |
+| ----- | ---------- | ----- | --------- | --------- | ------ | ------ |
+| 1000  | 2.24ms     | ~445k | 2245ns    | 1251ns    | 5      | 247    |
+| 5000  | 6.05ms     | ~826k | 1210ns    | 433ns     | 5      | 1230   |
+| 20000 | 31.10ms    | ~643k | 1555ns    | 416ns     | 6      | 5034   |
 
 **order = 8**
 
-|size|total time|ops/s|avgInsert|avgSearch|height|splits|
-|---|---|---|---|---|---|---|
-|1000|0.23ms|~4.29M|233ns|190ns|3|104|
-|5000|1.27ms|~3.9M|254ns|219ns|4|518|
-|20000|6.72ms|~2.97M|336ns|596ns|5|2088|
+| size  | total time | ops/s  | avgInsert | avgSearch | height | splits |
+| ----- | ---------- | ------ | --------- | --------- | ------ | ------ |
+| 1000  | 0.23ms     | ~4.29M | 233ns     | 190ns     | 3      | 104    |
+| 5000  | 1.27ms     | ~3.9M  | 254ns     | 219ns     | 4      | 518    |
+| 20000 | 6.72ms     | ~2.97M | 336ns     | 596ns     | 5      | 2088   |
 
 **order = 16**
 
@@ -409,6 +418,7 @@ private findLeaf(node: BPlusNode, key: Key): BPlusNode {
 通过这样的数据可以比较直观的理解参数变化导致延迟的变化
 
 再看看顺序插入和随机插入的对比
+
 ```bash
 Benchmark orders=4,8,16 sizes=1000,5000,20000 modes=sequential,random
 order=4 size=1000 mode=sequential -> inserts=1000 time=2.32ms (avgInsert=2323ns), avgSearch=1200ns, height=5, splits=436
@@ -446,41 +456,45 @@ Benchmarks finished.
 #### 1. Order=4：随机插入比顺序插入更快（约 2×）
 
 **原因：**
-* order 太小 → 树高度高（5~7 层）
-* 顺序插入总是插在右边 → 右支频繁分裂 → splits 数量巨大
-* 随机插入分布均匀 → 分裂更平均 → 树形状更平衡
-**结果：**
-* 顺序模式 splits 多到离谱，导致明显变慢
-* 随机反而快
+
+- order 太小 → 树高度高（5~7 层）
+- 顺序插入总是插在右边 → 右支频繁分裂 → splits 数量巨大
+- 随机插入分布均匀 → 分裂更平均 → 树形状更平衡
+  **结果：**
+- 顺序模式 splits 多到离谱，导致明显变慢
+- 随机反而快
 
 #### 2. Order=8：顺序插入比随机插入快很多（最高 4~5×）
 
 **原因：cache 局部性发挥到极致**
-* 顺序插入每次都沿右边链走 → 节点反复被访问 → **都在 L1/L2 cache 里**
-* 随机插入每次走不同路径 → **pointer chasing** → 高 cache miss
-顺序插入时：
-* ops 只需访问 4~5 层且命中 cache
-* 每次 insert 达到 **100~170ns**（极快）
-随机插入时：
-* 每层节点不同 → 都需要从内存加载 → 4~5 × RAM 访问延迟
-* 变成**500~700ns**等级
+
+- 顺序插入每次都沿右边链走 → 节点反复被访问 → **都在 L1/L2 cache 里**
+- 随机插入每次走不同路径 → **pointer chasing** → 高 cache miss
+  顺序插入时：
+- ops 只需访问 4~5 层且命中 cache
+- 每次 insert 达到 **100~170ns**（极快）
+  随机插入时：
+- 每层节点不同 → 都需要从内存加载 → 4~5 × RAM 访问延迟
+- 变成**500~700ns**等级
 
 #### 3. Order=16：随机比顺序稍慢，但差距变小（1.1~1.7×）
 
 **原因：order 越大 → 树越浅，高度越低**
-* 高度从 5 降到 3~4
-* 随机插入需要的 pointer chasing 层数减少
-* cache miss 成本下降
-因此：
-* 顺序仍略快（右链全在 cache）
-* 但随机不至于慢到 4×，整体差距变小
 
-需要带走的核心直觉: 
+- 高度从 5 降到 3~4
+- 随机插入需要的 pointer chasing 层数减少
+- cache miss 成本下降
+  因此：
+- 顺序仍略快（右链全在 cache）
+- 但随机不至于慢到 4×，整体差距变小
+
+需要带走的核心直觉:
 
 - **数据库的核心延迟来自于 IO 而不是二分查找**, 所以我们**让树变得无比矮胖, 多横向生长而非纵向生长**
 - Order 较大的树是 cache miss friendly 的, 对随机访问这种大概率 cachemiss 的查询很友好, 因为高度低, 降低了 io 的延迟
+
 ```bash
-           小阶（order=4）         中阶（order=8）         大阶（order=16）  
+           小阶（order=4）         中阶（order=8）         大阶（order=16）
 
 顺序    热路径超明显 → 超快      仍然很快（高度低）      快（但节点更大）
 
@@ -495,12 +509,11 @@ Benchmarks finished.
 首先呢, 一个框框是一个节点没错, 但是**不是所有的箭头都是指针**, **每两个节点之间只存在一个指针**, 剩下的 key -> children 的索引映射是通过 `lowerBound` 计算出来的, 计算出**keys 中第一个大于等于 key 的索引, 作为 children 的索引**, **等价于图中的两个 key 的缝指向子节点**, 但是这只是一个逻辑表示, 换句话说
 
 - 一个内部节点其实就是两个数组：
-    - `keys[0..m-1]`
-    - `children[0..m]`（指针数 = key 数 + 1）
-        
+  - `keys[0..m-1]`
+  - `children[0..m]`（指针数 = key 数 + 1）
 - 查找 key 的时候：  
-    用 `lower_bound(keys, x)` 找到第一个 `>= x` 的位置 `i`，  
-    然后走 `children[i]` 这一个指针就行了。
+   用 `lower_bound(keys, x)` 找到第一个 `>= x` 的位置 `i`，  
+   然后走 `children[i]` 这一个指针就行了。
 
 其次呢, 这个图的问题在于叶子节点的值应该在倒数第二层的父节点也出现, 这是 split 时候复制上去的.
 

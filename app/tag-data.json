@@ -1,10 +1,19 @@
 {
-  "data-structure": 1,
-  "database": 1,
   "web开发": 2,
   "nwpushare": 1,
-  "blog": 1,
-  "nextjs": 1,
+  "log": 1,
+  "学习": 1,
+  "成长": 1,
+  "ai": 1,
+  "vibecoding": 1,
+  "data-structure": 1,
+  "database": 1,
   "intro": 1,
-  "test": 1
+  "os": 1,
+  "multithread": 1,
+  "lock": 1,
+  "schedule": 1,
+  "test": 1,
+  "blog": 1,
+  "nextjs": 1
 }

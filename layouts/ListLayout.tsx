@@ -22,8 +22,6 @@ interface ListLayoutProps {
 
 function Pagination({ totalPages, currentPage }: PaginationProps) {
   const pathname = usePathname()
-  const segments = pathname.split('/')
-  const lastSegment = segments[segments.length - 1]
   const basePath = pathname
     .replace(/^\//, '') // Remove leading slash
     .replace(/\/page\/\d+\/?$/, '') // Remove any trailing /page
@@ -83,9 +81,9 @@ export default function ListLayout({
 
   return (
     <>
-      <div className="divide-y divide-gray-200 dark:divide-gray-700">
+      <div className="space-y-8">
         <div className="space-y-2 pt-6 pb-8 md:space-y-5">
-          <h1 className="text-3xl leading-9 font-extrabold tracking-tight text-gray-900 sm:text-4xl sm:leading-10 md:text-6xl md:leading-14 dark:text-gray-100">
+          <h1 className="text-primary-900 dark:text-primary-100 text-3xl leading-9 font-extrabold tracking-tight sm:text-4xl sm:leading-10 md:text-6xl md:leading-14">
             {title}
           </h1>
           <div className="relative max-w-lg">
@@ -96,11 +94,11 @@ export default function ListLayout({
                 type="text"
                 onChange={(e) => setSearchValue(e.target.value)}
                 placeholder="Search articles"
-                className="focus:border-primary-500 focus:ring-primary-500 block w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-900 dark:bg-gray-800 dark:text-gray-100"
+                className="glass-card border-primary-100/70 via-primary-50/60 text-primary-900 focus:border-primary-400 focus:ring-primary-300 dark:border-primary-900/40 dark:text-primary-50 block w-full rounded-2xl border bg-gradient-to-r from-white/95 to-white/95 px-4 py-3 dark:bg-gray-900/70"
               />
             </label>
             <svg
-              className="absolute top-3 right-3 h-5 w-5 text-gray-400 dark:text-gray-300"
+              className="text-primary-400 dark:text-primary-300 absolute top-3 right-3 h-6 w-6"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
@@ -115,39 +113,58 @@ export default function ListLayout({
             </svg>
           </div>
         </div>
-        <ul>
-          {!filteredBlogPosts.length && 'No posts found.'}
+
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {!filteredBlogPosts.length && (
+            <div className="glass-card text-primary-700 dark:text-primary-200 col-span-full rounded-3xl bg-white/90 p-6 text-center shadow-sm dark:bg-gray-900/70">
+              No posts found.
+            </div>
+          )}
           {displayPosts.map((post) => {
             const { path, date, title, summary, tags } = post
             return (
-              <li key={path} className="py-4">
-                <article className="space-y-2 xl:grid xl:grid-cols-4 xl:items-baseline xl:space-y-0">
-                  <dl>
-                    <dt className="sr-only">Published on</dt>
-                    <dd className="text-base leading-6 font-medium text-gray-500 dark:text-gray-400">
-                      <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
-                    </dd>
-                  </dl>
-                  <div className="space-y-3 xl:col-span-3">
-                    <div>
-                      <h3 className="text-2xl leading-8 font-bold tracking-tight">
-                        <Link href={`/${path}`} className="text-gray-900 dark:text-gray-100">
-                          {title}
-                        </Link>
-                      </h3>
-                      <div className="flex flex-wrap">
-                        {tags?.map((tag) => <Tag key={tag} text={tag} />)}
-                      </div>
-                    </div>
-                    <div className="prose max-w-none text-gray-500 dark:text-gray-400">
-                      {summary}
-                    </div>
+              <article
+                key={path}
+                className="glass-card group via-primary-50/70 relative flex flex-col justify-between overflow-hidden rounded-3xl bg-gradient-to-br from-white/95 to-white/95 p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl dark:from-gray-900 dark:via-gray-900/60 dark:to-gray-900"
+              >
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <time
+                      className="text-primary-700/80 dark:text-primary-200/80 text-sm font-medium"
+                      dateTime={date}
+                    >
+                      {formatDate(date, siteMetadata.locale)}
+                    </time>
                   </div>
-                </article>
-              </li>
+
+                  <h3 className="text-primary-900 group-hover:text-primary-600 dark:text-primary-50 dark:group-hover:text-primary-200 text-xl leading-snug font-bold transition">
+                    <Link href={`/${path}`} className="block">
+                      {title}
+                    </Link>
+                  </h3>
+
+                  <div className="flex flex-wrap gap-2">
+                    {tags?.map((tag) => <Tag key={tag} text={tag} />)}
+                  </div>
+
+                  <p className="prose text-primary-800/80 dark:text-primary-100/80 line-clamp-3 max-w-none text-sm">
+                    {summary}
+                  </p>
+                </div>
+
+                <div className="mt-6">
+                  <Link
+                    href={`/${path}`}
+                    className="text-primary-700 hover:text-primary-600 dark:text-primary-200 dark:hover:text-primary-100 text-sm font-semibold"
+                    aria-label={`Read more: "${title}"`}
+                  >
+                    Read more &rarr;
+                  </Link>
+                </div>
+              </article>
             )
           })}
-        </ul>
+        </div>
       </div>
       {pagination && pagination.totalPages > 1 && !searchValue && (
         <Pagination currentPage={pagination.currentPage} totalPages={pagination.totalPages} />

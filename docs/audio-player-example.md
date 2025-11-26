@@ -15,13 +15,13 @@
 
 ## 参数说明
 
-| 参数 | 必需 | 类型 | 默认值 | 说明 |
-|------|------|------|--------|------|
-| `src` | ✅ | string | - | 音频文件URL或路径 |
-| `title` | ❌ | string | "未知标题" | 歌曲标题 |
-| `artist` | ❌ | string | "未知艺术家" | 艺术家名称 |
-| `cover` | ❌ | string | - | 封面图片URL |
-| `autoPlay` | ❌ | boolean | false | 是否自动播放 |
+| 参数       | 必需 | 类型    | 默认值       | 说明              |
+| ---------- | ---- | ------- | ------------ | ----------------- |
+| `src`      | ✅   | string  | -            | 音频文件URL或路径 |
+| `title`    | ❌   | string  | "未知标题"   | 歌曲标题          |
+| `artist`   | ❌   | string  | "未知艺术家" | 艺术家名称        |
+| `cover`    | ❌   | string  | -            | 封面图片URL       |
+| `autoPlay` | ❌   | boolean | false        | 是否自动播放      |
 
 ## 示例1：基本播放器
 
@@ -52,15 +52,14 @@
 ## 音频文件位置
 
 将音频文件放在 `public/audio/` 目录下，例如：
+
 - `public/audio/music1.mp3`
 - `public/audio/music2.mp3`
 
 然后在MDX中引用：
+
 ```mdx
-<AudioPlayer
-  src="/audio/music1.mp3"
-  title="我的音乐"
-/>
+<AudioPlayer src="/audio/music1.mp3" title="我的音乐" />
 ```
 
 ## 支持的音频格式

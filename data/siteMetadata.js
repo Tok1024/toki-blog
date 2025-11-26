@@ -6,7 +6,7 @@ const siteMetadata = {
   description: '最新动态',
   language: 'zh-CN',
   theme: 'system', // system, dark or light
-  siteUrl: 'https://tailwind-nextjs-starter-blog.vercel.app',
+  siteUrl: 'https://toki.codes',
   siteRepo: 'https://github.com/Tok1024/toki-blog',
   siteLogo: `${process.env.BASE_PATH || ''}/static/images/logo.png`,
   socialBanner: `${process.env.BASE_PATH || ''}/static/images/twitter-card.png`,
@@ -24,7 +24,7 @@ const siteMetadata = {
       // We use an env variable for this site to avoid other users cloning our analytics ID
       umamiWebsiteId: process.env.NEXT_UMAMI_ID, // e.g. 123e4567-e89b-12d3-a456-426614174000
       // You may also need to overwrite the script if you're storing data in the US - ex:
-      src: 'https://umami.toki.codes/script.js'
+      src: 'https://umami.toki.codes/script.js',
       // Remember to add 'us.umami.is' in `next.config.js` as a permitted domain for the CSP
     },
     // plausibleAnalytics: {
@@ -92,3 +92,6 @@ const siteMetadata = {
 }
 
 module.exports = siteMetadata
+// Ensure compatibility with both CommonJS and ES module default imports
+// so `import siteMetadata from '@/data/siteMetadata'` works after transpilation.
+module.exports.default = siteMetadata

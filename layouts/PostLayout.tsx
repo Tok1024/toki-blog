@@ -10,17 +10,11 @@ import Tag from '@/components/Tag'
 import siteMetadata from '@/data/siteMetadata'
 import ScrollTopAndComment from '@/components/ScrollTopAndComment'
 import TOC from '@/components/TOC'
+import { formatDate } from 'pliny/utils/formatDate'
 
 const editUrl = (path) => `${siteMetadata.siteRepo}/tree/master/data/${path}`
 // const discussUrl = (path) =>
 //   `https://mobile.twitter.com/search?q=${encodeURIComponent(`${siteMetadata.siteUrl}/${path}`)}`
-
-const postDateTemplate: Intl.DateTimeFormatOptions = {
-  weekday: 'long',
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-}
 
 interface LayoutProps {
   content: CoreContent<Blog>
@@ -33,97 +27,124 @@ interface LayoutProps {
 export default function PostLayout({ content, authorDetails, next, prev, children }: LayoutProps) {
   const { filePath, path, slug, date, title, tags } = content
   const basePath = path.split('/')[0]
+  const primaryAuthor = authorDetails?.[0]
+  const tocItems = content.toc as unknown as { value: string; url: string; depth: number }[]
 
   return (
     <SectionContainer>
       <ScrollTopAndComment />
-      <article>
-        <div className="grid xl:grid-cols-5 xl:gap-x-20 xl:divide-y xl:divide-gray-200 xl:dark:divide-gray-700">
-          <header className="col-span-5 pt-6 xl:pb-6">
-            <div className="space-y-1 text-center">
-              <dl className="space-y-10">
-                <div>
-                  <dt className="sr-only">Published on</dt>
-                  <dd className="text-base leading-6 font-medium text-gray-500 dark:text-gray-400">
-                    <time dateTime={date}>
-                      {new Date(date).toLocaleDateString(siteMetadata.locale, postDateTemplate)}
-                    </time>
-                  </dd>
-                </div>
-              </dl>
-              <div>
+      <article className="mx-auto max-w-screen-xl">
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_360px] xl:gap-14">
+          <div className="space-y-10">
+            <header className="glass-card via-primary-50/70 ring-primary-100/70 rounded-3xl bg-gradient-to-br from-white/95 to-white/95 p-8 shadow-sm dark:from-gray-900 dark:via-gray-900/60 dark:to-gray-900">
+              <div className="text-primary-700 dark:text-primary-200 flex flex-wrap items-center gap-3 text-sm">
+                <span className="bg-primary-50 text-primary-700 ring-primary-100/80 dark:bg-primary-900/40 dark:text-primary-200 dark:ring-primary-900/60 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold tracking-wide uppercase ring-1">
+                  Published
+                </span>
+                <time dateTime={date} className="font-medium">
+                  {formatDate(date, siteMetadata.locale)}
+                </time>
+                <span className="hidden h-1 w-1 rounded-full bg-gray-300 sm:inline-block dark:bg-gray-600" />
+                <Link
+                  href={`/${basePath}`}
+                  className="text-primary-700 hover:text-primary-600 dark:text-primary-200 dark:hover:text-primary-100 inline-flex items-center gap-1 font-semibold transition"
+                  aria-label="Back to the blog"
+                >
+                  返回列表 ↗
+                </Link>
+                <span className="hidden h-1 w-1 rounded-full bg-gray-300 sm:inline-block dark:bg-gray-600" />
+                <Link
+                  href={editUrl(filePath)}
+                  className="text-primary-700 hover:text-primary-600 dark:text-primary-200 dark:hover:text-primary-100 inline-flex items-center gap-2 transition"
+                >
+                  编辑此页
+                  <span aria-hidden="true">✏️</span>
+                </Link>
+              </div>
+              <div className="mt-5 space-y-4">
                 <PageTitle>{title}</PageTitle>
+                {primaryAuthor && (
+                  <div className="glass-card via-primary-50/70 text-primary-800 dark:text-primary-100 flex flex-wrap items-center gap-3 rounded-2xl bg-gradient-to-r from-white/95 to-white/95 px-3 py-2 text-sm shadow-sm dark:from-gray-900 dark:via-gray-900/60 dark:to-gray-900">
+                    {primaryAuthor.avatar && (
+                      <Image
+                        src={primaryAuthor.avatar}
+                        alt={primaryAuthor.name}
+                        width={40}
+                        height={40}
+                        className="ring-primary-100 dark:ring-primary-900 h-10 w-10 rounded-full object-cover ring-2"
+                      />
+                    )}
+                    <div className="leading-tight">
+                      <p className="font-semibold text-gray-900 dark:text-gray-50">
+                        {primaryAuthor.name}
+                      </p>
+                      {primaryAuthor.occupation && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {primaryAuthor.occupation}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {tags && tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {tags.map((tag) => (
+                      <Tag key={tag} text={tag} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </header>
+
+            <div className="glass-card via-primary-50/60 rounded-3xl bg-gradient-to-br from-white/95 to-white/95 px-6 py-10 shadow-sm dark:from-gray-900 dark:via-gray-900/60 dark:to-gray-900">
+              <div className="prose text-primary-900 dark:prose-invert dark:text-primary-50 max-w-none">
+                {children}
               </div>
             </div>
-          </header>
 
-          {/* 主内容：从第2列开始，占三列（更宽） */}
-          <div className="divide-y divide-gray-200 xl:col-span-3 xl:col-start-2 xl:row-span-2 xl:pb-8 dark:divide-gray-700">
-            <div className="prose dark:prose-invert max-w-none pt-10 pb-8">{children}</div>
-            <div className="pt-6 pb-6 text-sm text-gray-700 dark:text-gray-300">
-              {/* <Link href={discussUrl(path)} rel="nofollow">Discuss on Twitter</Link> */}
-            </div>
+            {(next || prev) && (
+              <div className="glass-card via-primary-50/70 grid gap-4 rounded-3xl bg-gradient-to-br from-white/95 to-white/95 px-6 py-5 shadow-sm md:grid-cols-2 dark:from-gray-900 dark:via-gray-900/60 dark:to-gray-900">
+                {prev && prev.path && (
+                  <div className="border-primary-100/70 from-primary-50/70 to-primary-50/70 dark:border-primary-900/50 dark:from-primary-900/30 dark:to-primary-900/30 rounded-2xl border bg-gradient-to-br via-white/80 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:via-gray-900/60">
+                    <p className="text-primary-700 dark:text-primary-200 text-xs font-semibold tracking-wide uppercase">
+                      Previous
+                    </p>
+                    <Link
+                      href={`/${prev.path}`}
+                      className="text-primary-800 hover:text-primary-600 dark:text-primary-200 dark:hover:text-primary-100 mt-2 block text-lg font-semibold transition"
+                    >
+                      {prev.title}
+                    </Link>
+                  </div>
+                )}
+                {next && next.path && (
+                  <div className="border-primary-100/60 via-primary-50/60 dark:border-primary-900/40 rounded-2xl border bg-gradient-to-br from-white/90 to-white/90 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:from-gray-900 dark:via-gray-900/60 dark:to-gray-900">
+                    <p className="text-primary-700 dark:text-primary-200 text-xs font-semibold tracking-wide uppercase">
+                      Next
+                    </p>
+                    <Link
+                      href={`/${next.path}`}
+                      className="text-primary-800 hover:text-primary-600 dark:text-primary-200 dark:hover:text-primary-100 mt-2 block text-lg font-semibold transition"
+                    >
+                      {next.title}
+                    </Link>
+                  </div>
+                )}
+              </div>
+            )}
+
             {siteMetadata.comments && (
-              <div className="pt-6 pb-6 text-center text-gray-700 dark:text-gray-300" id="comment">
+              <div
+                id="comment"
+                className="glass-card via-primary-50/70 text-primary-800 dark:text-primary-100 rounded-3xl bg-gradient-to-br from-white/95 to-white/95 px-6 py-8 text-center shadow-sm dark:from-gray-900 dark:via-gray-900/60 dark:to-gray-900"
+              >
                 <Comments slug={slug} />
               </div>
             )}
           </div>
 
-          {/* 左侧辅助列（tags / prev / next / back） */}
-          <footer className="xl:col-span-1 xl:col-start-1 xl:row-start-2">
-            <div className="divide-gray-200 text-sm leading-5 font-medium xl:divide-y dark:divide-gray-700">
-              {tags && (
-                <div className="py-4 xl:py-8">
-                  <h2 className="text-xs tracking-wide text-gray-500 uppercase dark:text-gray-400">
-                    Tags
-                  </h2>
-                  <div className="flex flex-wrap">
-                    {tags.map((tag) => (
-                      <Tag key={tag} text={tag} />
-                    ))}
-                  </div>
-                </div>
-              )}
-              {(next || prev) && (
-                <div className="flex justify-between py-4 xl:block xl:space-y-8 xl:py-8">
-                  {prev && prev.path && (
-                    <div>
-                      <h2 className="text-xs tracking-wide text-gray-500 uppercase dark:text-gray-400">
-                        Previous Article
-                      </h2>
-                      <div className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400">
-                        <Link href={`/${prev.path}`}>{prev.title}</Link>
-                      </div>
-                    </div>
-                  )}
-                  {next && next.path && (
-                    <div>
-                      <h2 className="text-xs tracking-wide text-gray-500 uppercase dark:text-gray-400">
-                        Next Article
-                      </h2>
-                      <div className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400">
-                        <Link href={`/${next.path}`}>{next.title}</Link>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-            <div className="pt-4 xl:pt-8">
-              <Link
-                href={`/${basePath}`}
-                className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
-                aria-label="Back to the blog"
-              >
-                &larr; Back to the blog
-              </Link>
-            </div>
-          </footer>
+          <TOC toc={tocItems} />
         </div>
-
-        {/* 固定在视口右侧的 TOC（组件内部使用 xl:fixed），脱离网格，不再占用列空间 */}
-        <TOC toc={content.toc as unknown as { value: string; url: string; depth: number }[]} />
       </article>
     </SectionContainer>
   )

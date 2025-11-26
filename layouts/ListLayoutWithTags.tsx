@@ -81,21 +81,21 @@ export default function ListLayoutWithTags({
 
   return (
     <>
-      <div>
+      <div className="space-y-8">
         <div className="pt-6 pb-6">
-          <h1 className="text-3xl leading-9 font-extrabold tracking-tight text-gray-900 sm:hidden sm:text-4xl sm:leading-10 md:text-6xl md:leading-14 dark:text-gray-100">
+          <h1 className="text-primary-900 dark:text-primary-100 text-3xl leading-9 font-extrabold tracking-tight sm:hidden sm:text-4xl sm:leading-10 md:text-6xl md:leading-14">
             {title}
           </h1>
         </div>
-        <div className="flex sm:space-x-24">
-          <div className="hidden h-full max-h-screen max-w-[280px] min-w-[280px] flex-wrap overflow-auto rounded-sm bg-gray-50 pt-5 shadow-md sm:flex dark:bg-gray-900/70 dark:shadow-gray-800/40">
+        <div className="flex flex-col gap-8 sm:flex-row">
+          <div className="glass-card via-primary-50/60 hidden h-full max-h-screen max-w-[280px] min-w-[280px] flex-wrap overflow-auto rounded-3xl bg-gradient-to-b from-white/95 to-white/95 pt-5 shadow-sm sm:flex dark:from-gray-900 dark:via-gray-900/60 dark:to-gray-900">
             <div className="px-6 py-4">
               {pathname.startsWith('/blog') ? (
-                <h3 className="text-primary-500 font-bold uppercase">All Posts</h3>
+                <h3 className="text-primary-600 font-bold uppercase">All Posts</h3>
               ) : (
                 <Link
                   href={`/blog`}
-                  className="hover:text-primary-500 dark:hover:text-primary-500 font-bold text-gray-700 uppercase dark:text-gray-300"
+                  className="text-primary-800 hover:text-primary-600 dark:text-primary-100 dark:hover:text-primary-200 font-bold uppercase"
                 >
                   All Posts
                 </Link>
@@ -105,13 +105,13 @@ export default function ListLayoutWithTags({
                   return (
                     <li key={t} className="my-3">
                       {decodeURI(pathname.split('/tags/')[1]) === slug(t) ? (
-                        <h3 className="text-primary-500 inline px-3 py-2 text-sm font-bold uppercase">
+                        <h3 className="text-primary-600 inline px-3 py-2 text-sm font-bold uppercase">
                           {`${t} (${tagCounts[t]})`}
                         </h3>
                       ) : (
                         <Link
                           href={`/tags/${slug(t)}`}
-                          className="hover:text-primary-500 dark:hover:text-primary-500 px-3 py-2 text-sm font-medium text-gray-500 uppercase dark:text-gray-300"
+                          className="text-primary-700 hover:text-primary-600 dark:text-primary-100 dark:hover:text-primary-200 px-3 py-2 text-sm font-medium uppercase"
                           aria-label={`View posts tagged ${t}`}
                         >
                           {`${t} (${tagCounts[t]})`}
@@ -123,41 +123,54 @@ export default function ListLayoutWithTags({
               </ul>
             </div>
           </div>
-          <div>
-            <ul>
+          <div className="flex-1">
+            <div className="grid gap-6 sm:grid-cols-2">
               {displayPosts.map((post) => {
                 const { path, date, title, summary, tags } = post
                 return (
-                  <li key={path} className="py-5">
-                    <article className="flex flex-col space-y-2 xl:space-y-0">
-                      <dl>
-                        <dt className="sr-only">Published on</dt>
-                        <dd className="text-base leading-6 font-medium text-gray-500 dark:text-gray-400">
-                          <time dateTime={date} suppressHydrationWarning>
-                            {formatDate(date, siteMetadata.locale)}
-                          </time>
-                        </dd>
-                      </dl>
-                      <div className="space-y-3">
-                        <div>
-                          <h2 className="text-2xl leading-10 font-medium tracking-wide">
-                            <Link href={`/${path}`} className="text-gray-900 dark:text-gray-100">
-                              {title}
-                            </Link>
-                          </h2>
-                          <div className="flex flex-wrap">
-                            {tags?.map((tag) => <Tag key={tag} text={tag} />)}
-                          </div>
-                        </div>
-                        <div className="prose max-w-none text-gray-500 dark:text-gray-400">
-                          {summary}
-                        </div>
+                  <article
+                    key={path}
+                    className="glass-card group via-primary-50/70 relative flex flex-col justify-between overflow-hidden rounded-3xl bg-gradient-to-br from-white/95 to-white/95 p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl dark:from-gray-900 dark:via-gray-900/60 dark:to-gray-900"
+                  >
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <time
+                          className="text-primary-700/80 dark:text-primary-200/80 text-sm font-medium"
+                          dateTime={date}
+                          suppressHydrationWarning
+                        >
+                          {formatDate(date, siteMetadata.locale)}
+                        </time>
                       </div>
-                    </article>
-                  </li>
+
+                      <h3 className="text-primary-900 group-hover:text-primary-600 dark:text-primary-50 dark:group-hover:text-primary-200 text-xl leading-snug font-bold transition">
+                        <Link href={`/${path}`} className="block">
+                          {title}
+                        </Link>
+                      </h3>
+
+                      <div className="flex flex-wrap gap-2">
+                        {tags?.map((tag) => <Tag key={tag} text={tag} />)}
+                      </div>
+
+                      <p className="prose text-primary-800/80 dark:text-primary-100/80 line-clamp-3 max-w-none text-sm">
+                        {summary}
+                      </p>
+                    </div>
+
+                    <div className="mt-6">
+                      <Link
+                        href={`/${path}`}
+                        className="text-primary-700 hover:text-primary-600 dark:text-primary-200 dark:hover:text-primary-100 text-sm font-semibold"
+                        aria-label={`Read more: "${title}"`}
+                      >
+                        Read more &rarr;
+                      </Link>
+                    </div>
+                  </article>
                 )
               })}
-            </ul>
+            </div>
             {pagination && pagination.totalPages > 1 && (
               <Pagination currentPage={pagination.currentPage} totalPages={pagination.totalPages} />
             )}
