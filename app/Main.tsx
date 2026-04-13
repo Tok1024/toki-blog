@@ -33,22 +33,22 @@ export default function Home({ posts }: HomeProps) {
     <div className="space-y-12 sm:space-y-16">
       <HeroCard postCount={posts.length} />
 
-      <section className="space-y-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <section className="space-y-10">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-2">
             <p className="text-primary-700 dark:text-primary-300 text-sm font-semibold tracking-[0.18em] uppercase">
               Latest writing
             </p>
-            <h2 className="text-primary-900 dark:text-primary-100 text-3xl leading-tight font-bold sm:text-4xl">
+            <h2 className="dark:text-primary-100 text-3xl leading-tight font-semibold tracking-[-0.03em] text-gray-950 sm:text-4xl">
               最新动态
             </h2>
-            <p className="text-primary-700/80 dark:text-primary-200/80 text-base">
+            <p className="max-w-2xl text-base leading-8 text-gray-600 dark:text-gray-300">
               {siteMetadata.description}
             </p>
           </div>
           {topTags.length > 0 && (
-            <div className="glass-card via-primary-50/70 text-primary-800 dark:text-primary-100 flex flex-wrap items-center gap-3 rounded-2xl bg-gradient-to-r from-white/95 to-white/95 px-4 py-3 text-sm shadow-sm dark:from-gray-900 dark:via-gray-900/70 dark:to-gray-900">
-              <span className="text-primary-700 dark:text-primary-300 text-xs font-semibold tracking-wide uppercase">
+            <div className="dark:text-primary-100 flex flex-wrap items-center gap-3 text-sm text-gray-600">
+              <span className="text-primary-700 dark:text-primary-300 text-xs font-semibold tracking-[0.16em] uppercase">
                 常用标签
               </span>
               <div className="flex flex-wrap gap-2">
@@ -60,7 +60,7 @@ export default function Home({ posts }: HomeProps) {
           )}
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="divide-primary-100/80 space-y-0 divide-y dark:divide-gray-800">
           {!posts.length && (
             <p className="glass-card border-primary-200 text-primary-700 dark:border-primary-900/50 dark:text-primary-200 rounded-2xl border-dashed bg-white/90 p-6 text-center dark:bg-gray-900/70">
               No posts found.
@@ -71,33 +71,31 @@ export default function Home({ posts }: HomeProps) {
             return (
               <article
                 key={slug}
-                className="glass-card group via-primary-50/70 relative overflow-hidden rounded-3xl bg-gradient-to-br from-white/95 to-white/95 p-6 shadow-lg transition duration-300 hover:-translate-y-1 hover:shadow-xl dark:from-gray-900 dark:via-gray-900/60 dark:to-gray-900"
+                className="group grid gap-5 py-9 md:grid-cols-[108px_minmax(0,1fr)] md:gap-9"
               >
-                <div className="relative flex h-full flex-col gap-6">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-1">
-                      <time
-                        className="text-primary-700/80 dark:text-primary-200/80 text-sm font-medium"
-                        dateTime={date}
-                      >
-                        {formatDate(date, siteMetadata.locale)}
-                      </time>
-                      <h3 className="text-primary-900 group-hover:text-primary-600 dark:text-primary-50 dark:group-hover:text-primary-200 text-xl leading-snug font-semibold transition sm:text-2xl">
-                        <Link href={`/blog/${slug}`} className="flex items-start gap-2">
-                          <span className="bg-primary-50 text-primary-700 ring-primary-100/80 dark:bg-primary-900/40 dark:text-primary-200 dark:ring-primary-900/60 inline-flex rounded-full px-2 py-0.5 text-xs font-semibold tracking-wide uppercase ring-1">
-                            {index === 0 ? 'New' : '更新'}
-                          </span>
-                          {title}
-                        </Link>
-                      </h3>
-                    </div>
+                <div className="pt-1">
+                  <time
+                    className="block text-sm font-medium tracking-[0.02em] text-gray-500 dark:text-gray-400"
+                    dateTime={date}
+                  >
+                    {formatDate(date, siteMetadata.locale)}
+                  </time>
+                </div>
+
+                <div className="relative flex h-full flex-col gap-5">
+                  <div className="space-y-3">
+                    <h3 className="group-hover:text-primary-700 dark:text-primary-50 dark:group-hover:text-primary-200 text-[1.58rem] leading-[1.48] font-semibold tracking-[-0.03em] text-gray-950 transition">
+                      <Link href={`/blog/${slug}`} className="block">
+                        {title}
+                      </Link>
+                    </h3>
+
+                    <p className="max-w-2xl text-[1.02rem] leading-8 text-gray-600 dark:text-gray-300">
+                      {summary}
+                    </p>
                   </div>
 
-                  <p className="prose dark:prose-invert max-w-none text-base text-gray-600 dark:text-gray-300">
-                    {summary}
-                  </p>
-
-                  <div className="mt-auto flex flex-wrap items-center justify-between gap-3">
+                  <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-1">
                     <div className="flex flex-wrap gap-2">
                       {tags.map((tag) => (
                         <Tag key={tag} text={tag} />
@@ -105,10 +103,10 @@ export default function Home({ posts }: HomeProps) {
                     </div>
                     <Link
                       href={`/blog/${slug}`}
-                      className="text-primary-700 hover:text-primary-600 dark:text-primary-200 dark:hover:text-primary-100 inline-flex items-center gap-2 text-sm font-semibold transition hover:translate-x-1"
+                      className="text-primary-700 hover:text-primary-800 dark:text-primary-200 dark:hover:text-primary-100 inline-flex items-center gap-2 text-sm font-semibold tracking-[0.08em] uppercase transition"
                       aria-label={`Read more: "${title}"`}
                     >
-                      Read more
+                      {index === 0 ? 'Newest' : 'Read'}
                       <span aria-hidden="true">→</span>
                     </Link>
                   </div>
@@ -123,7 +121,7 @@ export default function Home({ posts }: HomeProps) {
         <div className="flex justify-end">
           <Link
             href="/blog"
-            className="glass-card from-primary-500 via-primary-400 to-primary-500 dark:from-primary-500 dark:via-primary-400 dark:to-primary-500 inline-flex items-center gap-2 rounded-full bg-gradient-to-r px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 hover:shadow-lg"
+            className="border-primary-200 text-primary-800 hover:border-primary-300 hover:bg-primary-50 dark:text-primary-100 inline-flex items-center gap-2 rounded-full border bg-white px-6 py-3 text-sm font-semibold transition dark:border-gray-700 dark:bg-gray-900 dark:hover:border-gray-600 dark:hover:bg-gray-800"
             aria-label="All posts"
           >
             All Posts

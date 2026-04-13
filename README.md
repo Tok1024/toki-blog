@@ -14,13 +14,16 @@
 
 ### 开发
 
-要求 Node 18/20 LTS。
+要求 Node 20 LTS，包管理器使用项目内置的 Yarn 3.6.1（仓库已通过 `.yarnrc.yml` 锁定）。
 
 ```bash
-pnpm install
-pnpm dev
+corepack enable
+yarn install
+yarn dev
 # 浏览器访问 http://localhost:3000
 ```
+
+当前仓库在本机 `yarn build` 已通过，可正常生成 Next.js standalone 产物。
 
 ### 写文章
 
@@ -62,6 +65,10 @@ docker run -d -p 3000:3000 --name toki-blog toki-blog:latest
 ```
 
 建议使用 CI/CD 构建镜像并在服务器用 Watchtower/compose 自动拉取与重启。
+
+### 架构速览
+
+更完整的项目结构说明见 [docs/architecture-overview.md](/Users/toki/Code/Projects/toki-blog/docs/architecture-overview.md)。
 
 ### 许可证
 

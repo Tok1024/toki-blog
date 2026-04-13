@@ -87,7 +87,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000" />
       <link rel="alternate" type="application/rss+xml" href={`${basePath}/feed.xml`} />
       <body
-        className="relative min-h-screen overflow-x-hidden bg-sky-50/95 pl-[calc(100vw-100%)] tracking-wide text-black antialiased dark:bg-gray-900 dark:text-white"
+        className="relative min-h-screen overflow-x-hidden bg-[linear-gradient(180deg,#fbfdff_0%,#f4f8fc_100%)] pl-[calc(100vw-100%)] tracking-wide text-gray-900 antialiased dark:bg-gray-950 dark:text-white"
         style={{
           fontFamily:
             '"OPPO Sans 4.0", "OPPO Sans", "HarmonyOS Sans", -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif',
@@ -95,16 +95,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         }}
       >
         <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-          <div className="absolute -top-24 -left-16 h-80 w-80 bg-[radial-gradient(circle_at_30%_30%,rgba(14,165,233,0.22),transparent_55%)] blur-3xl md:h-[28rem] md:w-[28rem]" />
-          <div className="absolute top-[-6%] right-[-8%] h-72 w-72 bg-[radial-gradient(circle_at_70%_20%,rgba(125,211,252,0.2),transparent_52%)] blur-3xl md:h-[26rem] md:w-[26rem]" />
-          <div className="absolute bottom-[-18%] left-[18%] h-96 w-[30rem] bg-[radial-gradient(circle_at_40%_60%,rgba(56,189,248,0.18),transparent_60%)] blur-[120px]" />
+          <div className="absolute inset-x-0 top-0 h-64 bg-[linear-gradient(180deg,rgba(219,233,251,0.55),rgba(255,255,255,0))]" />
+          <div className="absolute top-12 left-[8%] h-56 w-56 rounded-full bg-[rgba(219,233,251,0.28)] blur-3xl" />
+          <div className="absolute top-20 right-[10%] h-48 w-48 rounded-full bg-[rgba(238,245,255,0.72)] blur-3xl" />
         </div>
         <ThemeProviders>
           <Analytics analyticsConfig={siteMetadata.analytics as AnalyticsConfig} />
           <SectionContainer>
             <SearchProvider searchConfig={siteMetadata.search as SearchConfig}>
               <Header />
-              <main className="-mt-10 mb-auto">{children}</main>
+              <main className="mb-auto pt-2 sm:pt-3">{children}</main>
             </SearchProvider>
             <Footer />
           </SectionContainer>

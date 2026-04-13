@@ -81,37 +81,39 @@ export default function ListLayoutWithTags({
 
   return (
     <>
-      <div className="space-y-8">
-        <div className="pt-6 pb-6">
-          <h1 className="text-primary-900 dark:text-primary-100 text-3xl leading-9 font-extrabold tracking-tight sm:hidden sm:text-4xl sm:leading-10 md:text-6xl md:leading-14">
+      <div className="space-y-10">
+        <div className="pt-8 pb-2">
+          <h1 className="dark:text-primary-100 text-4xl leading-[1.2] font-semibold tracking-[-0.05em] text-gray-950 sm:hidden">
             {title}
           </h1>
         </div>
-        <div className="flex flex-col gap-8 sm:flex-row">
-          <div className="glass-card via-primary-50/60 hidden h-full max-h-screen max-w-[280px] min-w-[280px] flex-wrap overflow-auto rounded-3xl bg-gradient-to-b from-white/95 to-white/95 pt-5 shadow-sm sm:flex dark:from-gray-900 dark:via-gray-900/60 dark:to-gray-900">
+        <div className="flex flex-col gap-10 sm:flex-row">
+          <div className="hidden h-full max-h-screen max-w-[240px] min-w-[240px] flex-wrap overflow-auto sm:flex">
             <div className="px-6 py-4">
               {pathname.startsWith('/blog') ? (
-                <h3 className="text-primary-600 font-bold uppercase">All Posts</h3>
+                <h3 className="text-primary-700 border-primary-200 dark:text-primary-300 border-b pb-3 text-xs font-semibold tracking-[0.2em] uppercase dark:border-gray-800">
+                  All Posts
+                </h3>
               ) : (
                 <Link
                   href={`/blog`}
-                  className="text-primary-800 hover:text-primary-600 dark:text-primary-100 dark:hover:text-primary-200 font-bold uppercase"
+                  className="text-primary-700 border-primary-200 hover:text-primary-800 dark:text-primary-300 dark:hover:text-primary-200 block border-b pb-3 text-xs font-semibold tracking-[0.2em] uppercase dark:border-gray-800"
                 >
                   All Posts
                 </Link>
               )}
-              <ul>
+              <ul className="mt-4 space-y-1">
                 {sortedTags.map((t) => {
                   return (
-                    <li key={t} className="my-3">
+                    <li key={t}>
                       {decodeURI(pathname.split('/tags/')[1]) === slug(t) ? (
-                        <h3 className="text-primary-600 inline px-3 py-2 text-sm font-bold uppercase">
+                        <h3 className="bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-200 inline-block rounded-full px-3 py-2 text-sm font-medium">
                           {`${t} (${tagCounts[t]})`}
                         </h3>
                       ) : (
                         <Link
                           href={`/tags/${slug(t)}`}
-                          className="text-primary-700 hover:text-primary-600 dark:text-primary-100 dark:hover:text-primary-200 px-3 py-2 text-sm font-medium uppercase"
+                          className="hover:text-primary-700 dark:hover:text-primary-200 inline-block px-3 py-2 text-sm font-medium text-gray-500 dark:text-gray-300"
                           aria-label={`View posts tagged ${t}`}
                         >
                           {`${t} (${tagCounts[t]})`}
@@ -124,48 +126,48 @@ export default function ListLayoutWithTags({
             </div>
           </div>
           <div className="flex-1">
-            <div className="grid gap-6 sm:grid-cols-2">
+            <div className="divide-primary-100/80 divide-y dark:divide-gray-800">
               {displayPosts.map((post) => {
                 const { path, date, title, summary, tags } = post
                 return (
                   <article
                     key={path}
-                    className="glass-card group via-primary-50/70 relative flex flex-col justify-between overflow-hidden rounded-3xl bg-gradient-to-br from-white/95 to-white/95 p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl dark:from-gray-900 dark:via-gray-900/60 dark:to-gray-900"
+                    className="group grid gap-5 py-8 md:grid-cols-[120px_minmax(0,1fr)] md:gap-8"
                   >
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <time
-                          className="text-primary-700/80 dark:text-primary-200/80 text-sm font-medium"
-                          dateTime={date}
-                          suppressHydrationWarning
-                        >
-                          {formatDate(date, siteMetadata.locale)}
-                        </time>
-                      </div>
+                    <div className="pt-1">
+                      <time
+                        className="text-sm font-medium tracking-[0.02em] text-gray-500 dark:text-gray-400"
+                        dateTime={date}
+                        suppressHydrationWarning
+                      >
+                        {formatDate(date, siteMetadata.locale)}
+                      </time>
+                    </div>
 
-                      <h3 className="text-primary-900 group-hover:text-primary-600 dark:text-primary-50 dark:group-hover:text-primary-200 text-xl leading-snug font-bold transition">
+                    <div className="space-y-4">
+                      <h3 className="group-hover:text-primary-700 dark:text-primary-50 dark:group-hover:text-primary-200 text-[1.6rem] leading-[1.45] font-semibold tracking-[-0.03em] text-gray-950 transition">
                         <Link href={`/${path}`} className="block">
                           {title}
                         </Link>
                       </h3>
 
-                      <div className="flex flex-wrap gap-2">
-                        {tags?.map((tag) => <Tag key={tag} text={tag} />)}
-                      </div>
-
-                      <p className="prose text-primary-800/80 dark:text-primary-100/80 line-clamp-3 max-w-none text-sm">
+                      <p className="max-w-2xl text-[1.02rem] leading-8 text-gray-600 dark:text-gray-300">
                         {summary}
                       </p>
-                    </div>
 
-                    <div className="mt-6">
-                      <Link
-                        href={`/${path}`}
-                        className="text-primary-700 hover:text-primary-600 dark:text-primary-200 dark:hover:text-primary-100 text-sm font-semibold"
-                        aria-label={`Read more: "${title}"`}
-                      >
-                        Read more &rarr;
-                      </Link>
+                      <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                        <div className="flex flex-wrap gap-2">
+                          {tags?.map((tag) => <Tag key={tag} text={tag} />)}
+                        </div>
+
+                        <Link
+                          href={`/${path}`}
+                          className="text-primary-700 hover:text-primary-800 dark:text-primary-200 dark:hover:text-primary-100 text-sm font-semibold tracking-[0.08em] uppercase"
+                          aria-label={`Read more: "${title}"`}
+                        >
+                          Read &rarr;
+                        </Link>
+                      </div>
                     </div>
                   </article>
                 )
