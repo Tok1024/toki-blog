@@ -17,6 +17,8 @@ type HomeProps = {
 }
 
 export default function Home({ posts }: HomeProps) {
+  const studyPosts = posts.filter((post) => (post as { section?: string }).section === 'study')
+  const lifePosts = posts.filter((post) => (post as { section?: string }).section === 'life')
   const tagFrequency: Record<string, number> = posts.reduce((acc: Record<string, number>, post) => {
     post.tags.forEach((tag) => {
       acc[tag] = (acc[tag] || 0) + 1
@@ -29,91 +31,106 @@ export default function Home({ posts }: HomeProps) {
     .slice(0, 6)
     .map(([tag]) => tag)
 
+  const sections = [
+    {
+      key: 'study',
+      title: '学习记录',
+      href: '/study',
+      posts: studyPosts.slice(0, 3),
+    },
+    {
+      key: 'life',
+      title: '生活记录',
+      href: '/life',
+      posts: lifePosts.slice(0, 3),
+    },
+  ]
+
   return (
     <div className="space-y-12 sm:space-y-16">
       <HeroCard postCount={posts.length} />
 
       <section className="space-y-10">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-          <div className="space-y-2">
-            <p className="text-primary-700 dark:text-primary-300 text-sm font-semibold tracking-[0.18em] uppercase">
-              Latest writing
-            </p>
-            <h2 className="dark:text-primary-100 text-3xl leading-tight font-semibold tracking-[-0.03em] text-gray-950 sm:text-4xl">
-              最新动态
-            </h2>
-            <p className="max-w-2xl text-base leading-8 text-gray-600 dark:text-gray-300">
-              {siteMetadata.description}
-            </p>
-          </div>
-          {topTags.length > 0 && (
-            <div className="dark:text-primary-100 flex flex-wrap items-center gap-3 text-sm text-gray-600">
-              <span className="text-primary-700 dark:text-primary-300 text-xs font-semibold tracking-[0.16em] uppercase">
-                常用标签
-              </span>
-              <div className="flex flex-wrap gap-2">
-                {topTags.map((tag) => (
-                  <Tag key={tag} text={tag} />
-                ))}
-              </div>
+        {topTags.length > 0 && (
+          <div className="dark:text-primary-100 flex flex-wrap items-center gap-3 text-sm text-gray-600">
+            <span className="text-primary-700 dark:text-primary-300 text-xs font-semibold tracking-[0.16em] uppercase">
+              常用标签
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {topTags.map((tag) => (
+                <Tag key={tag} text={tag} />
+              ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        <div className="divide-primary-100/80 space-y-0 divide-y dark:divide-gray-800">
-          {!posts.length && (
-            <p className="glass-card border-primary-200 text-primary-700 dark:border-primary-900/50 dark:text-primary-200 rounded-2xl border-dashed bg-white/90 p-6 text-center dark:bg-gray-900/70">
-              No posts found.
-            </p>
-          )}
-          {posts.slice(0, MAX_DISPLAY).map((post, index) => {
-            const { slug, date, title, summary = '', tags } = post
-            return (
-              <article
-                key={slug}
-                className="group grid gap-5 py-9 md:grid-cols-[108px_minmax(0,1fr)] md:gap-9"
-              >
-                <div className="pt-1">
-                  <time
-                    className="block text-sm font-medium tracking-[0.02em] text-gray-500 dark:text-gray-400"
-                    dateTime={date}
-                  >
-                    {formatDate(date, siteMetadata.locale)}
-                  </time>
-                </div>
-
-                <div className="relative flex h-full flex-col gap-5">
-                  <div className="space-y-3">
-                    <h3 className="group-hover:text-primary-700 dark:text-primary-50 dark:group-hover:text-primary-200 text-[1.58rem] leading-[1.48] font-semibold tracking-[-0.03em] text-gray-950 transition">
-                      <Link href={`/blog/${slug}`} className="block">
-                        {title}
-                      </Link>
+        <div className="space-y-14">
+          {sections.map((section) => (
+            <section key={section.key} className="space-y-6">
+              <div className="border-primary-100/90 border-b pb-4 dark:border-gray-800">
+                <div className="flex items-end justify-between gap-4">
+                  <div>
+                    <h3 className="text-2xl font-semibold tracking-[-0.03em] text-gray-950 dark:text-gray-100">
+                      {section.title}
                     </h3>
-
-                    <p className="max-w-2xl text-[1.02rem] leading-8 text-gray-600 dark:text-gray-300">
-                      {summary}
-                    </p>
                   </div>
-
-                  <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-1">
-                    <div className="flex flex-wrap gap-2">
-                      {tags.map((tag) => (
-                        <Tag key={tag} text={tag} />
-                      ))}
-                    </div>
-                    <Link
-                      href={`/blog/${slug}`}
-                      className="text-primary-700 hover:text-primary-800 dark:text-primary-200 dark:hover:text-primary-100 inline-flex items-center gap-2 text-sm font-semibold tracking-[0.08em] uppercase transition"
-                      aria-label={`Read more: "${title}"`}
-                    >
-                      {index === 0 ? 'Newest' : 'Read'}
-                      <span aria-hidden="true">→</span>
-                    </Link>
-                  </div>
+                  <Link
+                    href={section.href}
+                    className="text-primary-700 hover:text-primary-800 dark:text-primary-200 dark:hover:text-primary-100 text-sm font-semibold tracking-[0.08em] uppercase"
+                  >
+                    More
+                  </Link>
                 </div>
-              </article>
-            )
-          })}
+              </div>
+
+              <div className="divide-primary-100/80 divide-y dark:divide-gray-800">
+                {!section.posts.length && (
+                  <p className="py-6 text-sm text-gray-500 dark:text-gray-400">暂无内容</p>
+                )}
+                {section.posts.map((post) => {
+                  const { slug, date, title, summary = '', tags } = post
+                  return (
+                    <article
+                      key={`${section.key}-${slug}`}
+                      className="group grid gap-4 py-6 md:grid-cols-[96px_minmax(0,1fr)] md:gap-8"
+                    >
+                      <div className="pt-1">
+                        <time
+                          className="block text-sm font-medium tracking-[0.02em] text-gray-500 dark:text-gray-400"
+                          dateTime={date}
+                        >
+                          {formatDate(date, siteMetadata.locale)}
+                        </time>
+                      </div>
+                      <div className="space-y-3">
+                        <h4 className="group-hover:text-primary-700 dark:text-primary-50 dark:group-hover:text-primary-200 text-[1.35rem] leading-[1.5] font-semibold tracking-[-0.03em] text-gray-950 transition">
+                          <Link href={`/blog/${slug}`} className="block">
+                            {title}
+                          </Link>
+                        </h4>
+                        <p className="max-w-2xl text-[0.98rem] leading-8 text-gray-600 dark:text-gray-300">
+                          {summary}
+                        </p>
+                        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                          <div className="flex flex-wrap gap-2">
+                            {tags.map((tag) => (
+                              <Tag key={tag} text={tag} />
+                            ))}
+                          </div>
+                          <Link
+                            href={`/blog/${slug}`}
+                            className="text-primary-700 hover:text-primary-800 dark:text-primary-200 dark:hover:text-primary-100 text-sm font-semibold tracking-[0.08em] uppercase"
+                          >
+                            Read →
+                          </Link>
+                        </div>
+                      </div>
+                    </article>
+                  )
+                })}
+              </div>
+            </section>
+          ))}
         </div>
       </section>
 

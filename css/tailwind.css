@@ -50,18 +50,18 @@
 
   /* Colors */
   /* Copied from https://tailwindcss.com/docs/theme#default-theme-variable-reference */
-  /* Primary palette: quiet blue for flatter surfaces and restrained accents */
-  --color-primary-50: #f8fbff;
-  --color-primary-100: #eef5ff;
-  --color-primary-200: #dbe9fb;
-  --color-primary-300: #bdd7f5;
-  --color-primary-400: #8fb9ea;
-  --color-primary-500: #5a97db;
-  --color-primary-600: #3f7fc7;
-  --color-primary-700: #2f669f;
-  --color-primary-800: #294f7a;
-  --color-primary-900: #243f5f;
-  --color-primary-950: #18293f;
+  /* Primary palette: VS Code light blue inspired, but softer and quieter */
+  --color-primary-50: #f7fafe;
+  --color-primary-100: #edf3fb;
+  --color-primary-200: #dce7f5;
+  --color-primary-300: #c3d5ea;
+  --color-primary-400: #9ebbd9;
+  --color-primary-500: #7d9fc4;
+  --color-primary-600: #6588ad;
+  --color-primary-700: #506f90;
+  --color-primary-800: #415a75;
+  --color-primary-900: #34485f;
+  --color-primary-950: #243240;
 
   --color-gray-50: oklch(0.985 0.002 247.839);
   --color-gray-100: oklch(0.967 0.003 264.542);
@@ -98,7 +98,7 @@
 @layer base {
   html {
     color: var(--color-gray-900);
-    background-color: #fbfdff;
+    background-color: #f7fafe;
   }
 
   body {
@@ -293,7 +293,7 @@ body :where(code):not(pre code)::after,
 @layer components {
   /* Shared frosted-glass surface for cards/panels */
   .glass-card {
-    @apply border-primary-200/70 border bg-white shadow-xs dark:border-gray-800/80 dark:bg-gray-900;
+    @apply border-primary-200/80 border bg-[rgba(252,254,255,0.96)] shadow-none dark:border-gray-800/80 dark:bg-gray-900;
   }
 }
 

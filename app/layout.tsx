@@ -87,18 +87,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000" />
       <link rel="alternate" type="application/rss+xml" href={`${basePath}/feed.xml`} />
       <body
-        className="relative min-h-screen overflow-x-hidden bg-[linear-gradient(180deg,#fbfdff_0%,#f4f8fc_100%)] pl-[calc(100vw-100%)] tracking-wide text-gray-900 antialiased dark:bg-gray-950 dark:text-white"
+        className="relative min-h-screen overflow-x-hidden bg-[#f7fafe] pl-[calc(100vw-100%)] tracking-wide text-gray-900 antialiased dark:bg-gray-950 dark:text-white"
         style={{
           fontFamily:
             '"OPPO Sans 4.0", "OPPO Sans", "HarmonyOS Sans", -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif',
           letterSpacing: '0.025em',
         }}
       >
-        <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-          <div className="absolute inset-x-0 top-0 h-64 bg-[linear-gradient(180deg,rgba(219,233,251,0.55),rgba(255,255,255,0))]" />
-          <div className="absolute top-12 left-[8%] h-56 w-56 rounded-full bg-[rgba(219,233,251,0.28)] blur-3xl" />
-          <div className="absolute top-20 right-[10%] h-48 w-48 rounded-full bg-[rgba(238,245,255,0.72)] blur-3xl" />
-        </div>
         <ThemeProviders>
           <Analytics analyticsConfig={siteMetadata.analytics as AnalyticsConfig} />
           <SectionContainer>

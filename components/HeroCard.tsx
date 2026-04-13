@@ -7,8 +7,8 @@ type HeroCardProps = {
 
 export default function HeroCard({ postCount = 0 }: HeroCardProps) {
   return (
-    <section className="border-primary-100/90 rounded-[1.75rem] border-b pb-12 sm:pb-14 dark:border-gray-800">
-      <div className="max-w-3xl space-y-7">
+    <section className="border-primary-100/90 pb-12 sm:pb-14 dark:border-gray-800">
+      <div className="border-primary-100/90 max-w-3xl space-y-7 border-b pb-12 dark:border-gray-800">
         <div className="space-y-5">
           <p className="text-primary-700 dark:text-primary-300 text-xs font-semibold tracking-[0.24em] uppercase">
             Personal notes and writing
@@ -23,11 +23,11 @@ export default function HeroCard({ postCount = 0 }: HeroCardProps) {
 
         <div className="flex flex-wrap items-center gap-3">
           <Link
-            href="/blog"
+            href="/study"
             className="bg-primary-700 hover:bg-primary-800 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium text-white transition"
-            aria-label="开始阅读"
+            aria-label="进入学习记录"
           >
-            开始阅读
+            学习记录
             <span aria-hidden="true">→</span>
           </Link>
           <Link

@@ -34,6 +34,7 @@ yarn dev
 title: My Post Title
 date: 2025-11-09
 lastmod: 2025-11-09
+section: study # study | life
 tags: [note]
 summary: 简短摘要
 images: []
