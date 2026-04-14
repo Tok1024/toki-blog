@@ -3,6 +3,7 @@ import Tag from '@/components/Tag'
 import siteMetadata from '@/data/siteMetadata'
 import { formatDate } from 'pliny/utils/formatDate'
 import HeroCard from '@/components/HeroCard'
+import { sectionMeta } from '@/lib/sections'
 
 const MAX_DISPLAY = 5
 
@@ -34,23 +35,23 @@ export default function Home({ posts }: HomeProps) {
   const sections = [
     {
       key: 'study',
-      title: '学习记录',
-      href: '/study',
-      blurb: '系统、数据库、实验、工程实现，以及更偏技术的长期积累。',
+      title: sectionMeta.study.title,
+      href: sectionMeta.study.href,
+      blurb: sectionMeta.study.description,
       posts: studyPosts.slice(0, 3),
     },
     {
       key: 'life',
-      title: '生活记录',
-      href: '/life',
-      blurb: '碎碎念、音乐、图片、动漫，还有那些想留下来的日常片段。',
+      title: sectionMeta.life.title,
+      href: sectionMeta.life.href,
+      blurb: sectionMeta.life.description,
       posts: lifePosts.slice(0, 3),
     },
   ]
 
   return (
     <div className="space-y-12 sm:space-y-16">
-      <HeroCard postCount={posts.length} />
+      <HeroCard posts={posts} />
 
       <section className="space-y-10">
         {topTags.length > 0 && (
