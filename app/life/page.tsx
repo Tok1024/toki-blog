@@ -23,6 +23,7 @@ export default async function LifePage() {
       initialDisplayPosts={initialDisplayPosts}
       pagination={pagination}
       title={sectionMeta.life.title}
+      description={sectionMeta.life.description}
     />
   )
 }

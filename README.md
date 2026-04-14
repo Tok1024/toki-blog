@@ -50,6 +50,15 @@ layout: PostLayout
 
 提示：开发环境保存即热更新；生产环境更新内容需重新构建并重启服务。
 
+如果平时在 Obsidian 里写，可以用导入脚本：
+
+```bash
+oblog 关键词 --section study
+oblog 关键词 --section life
+```
+
+脚本会按文件名搜索 Obsidian 笔记，生成 `data/blog/<slug>.mdx`，并把本地图片复制到 `public/static/images/<slug>/` 后自动改写引用。
+
 ### 外观定制（简要）
 
 - 主色：`css/tailwind.css` 中 `--color-primary-***`

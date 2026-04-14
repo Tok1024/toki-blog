@@ -23,6 +23,7 @@ export default async function StudyPage() {
       initialDisplayPosts={initialDisplayPosts}
       pagination={pagination}
       title={sectionMeta.study.title}
+      description={sectionMeta.study.description}
     />
   )
 }

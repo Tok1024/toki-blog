@@ -36,12 +36,14 @@ export default function Home({ posts }: HomeProps) {
       key: 'study',
       title: '学习记录',
       href: '/study',
+      blurb: '系统、数据库、实验、工程实现，以及更偏技术的长期积累。',
       posts: studyPosts.slice(0, 3),
     },
     {
       key: 'life',
       title: '生活记录',
       href: '/life',
+      blurb: '碎碎念、音乐、图片、动漫，还有那些想留下来的日常片段。',
       posts: lifePosts.slice(0, 3),
     },
   ]
@@ -69,10 +71,13 @@ export default function Home({ posts }: HomeProps) {
             <section key={section.key} className="space-y-6">
               <div className="border-primary-100/90 border-b pb-4 dark:border-gray-800">
                 <div className="flex items-end justify-between gap-4">
-                  <div>
+                  <div className="space-y-2">
                     <h3 className="text-2xl font-semibold tracking-[-0.03em] text-gray-950 dark:text-gray-100">
                       {section.title}
                     </h3>
+                    <p className="max-w-2xl text-sm leading-7 text-gray-600 dark:text-gray-300">
+                      {section.blurb}
+                    </p>
                   </div>
                   <Link
                     href={section.href}

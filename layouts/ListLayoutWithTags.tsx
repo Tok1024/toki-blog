@@ -17,6 +17,7 @@ interface PaginationProps {
 interface ListLayoutProps {
   posts: CoreContent<Blog>[]
   title: string
+  description?: string
   initialDisplayPosts?: CoreContent<Blog>[]
   pagination?: PaginationProps
 }
@@ -69,6 +70,7 @@ function Pagination({ totalPages, currentPage }: PaginationProps) {
 export default function ListLayoutWithTags({
   posts,
   title,
+  description,
   initialDisplayPosts = [],
   pagination,
 }: ListLayoutProps) {
@@ -83,9 +85,14 @@ export default function ListLayoutWithTags({
     <>
       <div className="space-y-10">
         <div className="pt-8 pb-2">
-          <h1 className="dark:text-primary-100 text-4xl leading-[1.2] font-semibold tracking-[-0.05em] text-gray-950 sm:hidden">
+          <h1 className="dark:text-primary-100 text-4xl leading-[1.2] font-semibold tracking-[-0.05em] text-gray-950">
             {title}
           </h1>
+          {description && (
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-gray-600 dark:text-gray-300">
+              {description}
+            </p>
+          )}
         </div>
         <div className="flex flex-col gap-10 sm:flex-row">
           <div className="hidden h-full max-h-screen max-w-[240px] min-w-[240px] flex-wrap overflow-auto sm:flex">

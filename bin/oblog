@@ -1,0 +1,2 @@
+#!/bin/sh
+exec node "/Users/toki/Code/Projects/toki-blog/scripts/obsidian-to-blog.mjs" "$@"

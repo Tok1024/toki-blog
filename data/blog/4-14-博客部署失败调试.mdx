@@ -1,0 +1,80 @@
+---
+title: '4.14 博客部署失败调试'
+date: 2026-04-14
+lastmod: 2026-04-14
+section: study
+tags: [note,blog,Docker,GitHub]
+summary: '试图更新博客，发现 Github 的 Workflow 失败了？'
+images: []
+draft: false
+authors: ['default']
+layout: PostLayout
+canonicalUrl: ''
+---
+
+### 问题
+试图更新博客，发现 Github 的 Workflow 失败了？
+![](/static/images/4-14-%E5%8D%9A%E5%AE%A2%E9%83%A8%E7%BD%B2%E5%A4%B1%E8%B4%A5%E8%B0%83%E8%AF%95/Pasted-image-20260414124839.png)
+
+### 项目结构
+显示没有权限访问 `ghcr.io`, 那我们需要复习一下整个博客项目的结构了：
+
+```text
+本地写代码 / 写文章
+        |
+        v
+ GitHub Repository
+ Tok1024/toki-blog
+ (源码 / MDX / Dockerfile / Workflow)
+        |
+        v
+ GitHub Actions
+ build-publish.yml
+ (自动构建 Docker 镜像)
+        |
+        v
+ GHCR Package
+ ghcr.io/tok1024/toki-blog:latest
+ (镜像仓库)
+        |
+        v
+ 服务器 Docker
+ blog 容器
+ (真正运行网站)
+        ^
+        |
+   Watchtower
+ (定时检查 GHCR
+  有新镜像就拉取并重启)
+```
+
+- 其中 ghcr 是 `Github Container Repository` ，是 github 为我们托管 docker 容器的平台。我们通过这个中间层，在 github workflow 中推到 ghcr 里。
+- 然后服务器定时检测 ghcr 的更新，检测到就会拉取并重启项目，非常地智能。
+
+### 包管理
+
+![](/static/images/4-14-%E5%8D%9A%E5%AE%A2%E9%83%A8%E7%BD%B2%E5%A4%B1%E8%B4%A5%E8%B0%83%E8%AF%95/Pasted-image-20260414124628.png)
+- 在 GitHub 里，发布到 GHCR 的 Docker 镜像会作为一个 Package 来管理。
+- 然后为了使 github workflow 可以推到 ghcr 里，我们现在需要在项目的 package setting里给自己的项目加入 admin 权限。
+
+### 服务器端
+
+顺带一提，要让服务器端的 watchtower 可以正常访问 `ghcr`，需要在服务器上执行：
+```shell
+docker login ghcr.io -u yourname
+# 输入 PAT
+```
+
+然后在密码里输入 github 上的 pat。这个 pat 藏的很深
+![](/static/images/4-14-%E5%8D%9A%E5%AE%A2%E9%83%A8%E7%BD%B2%E5%A4%B1%E8%B4%A5%E8%B0%83%E8%AF%95/Pasted-image-20260414125658.png)
+在 github 设置最底下那一列 `Developer settings` 里
+![](/static/images/4-14-%E5%8D%9A%E5%AE%A2%E9%83%A8%E7%BD%B2%E5%A4%B1%E8%B4%A5%E8%B0%83%E8%AF%95/Pasted-image-20260414125735.png)
+就在这里~
+
+### 成功了
+
+总之，处理好上面的问题后，这样就能部署成功了~
+![](/static/images/4-14-%E5%8D%9A%E5%AE%A2%E9%83%A8%E7%BD%B2%E5%A4%B1%E8%B4%A5%E8%B0%83%E8%AF%95/Pasted-image-20260414124650.png)
+
+这段时间很多事发生了，做了很多无用功，也很焦虑。
+但是 I'm back！接下来要保持推进！
