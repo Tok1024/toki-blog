@@ -31,8 +31,8 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: tok1024
-          password: ${{ secrets.GHCR_PAT }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build & Push
         uses: docker/build-push-action@v6
