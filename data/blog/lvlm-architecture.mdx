@@ -1,0 +1,70 @@
+---
+title: 'LVLM架构分析'
+date: 2026-04-24
+lastmod: 2026-04-24
+section: study
+tags: [note, LLM, LVLM, 多模态]
+summary: '多模态大模型如何看懂图片'
+images: []
+draft: false
+authors: ['default']
+layout: PostLayout
+canonicalUrl: ''
+---
+
+## LVLM
+多模态大模型最重要的任务就是**让 LLM 可以看懂图片**。方式就是把图像 encoder 编码出的图像向量和 LLM 的空间对齐，从而 LLM 看见图像。那么关键的问题就是：
+
+> 图像 encoder （如 CLIP, SigLIP 之类的 ViT）和 LLM （LLaMA，Qwen）一般是分开训练，有着各自的任务。形成的向量空间也不同。那么要怎么对齐视觉空间和文本空间。
+
+![](/static/images/lvlm-architecture/Pasted-image-20260424110645.png)
+## 多模态对齐模块
+### Q-former
+Q-former 是 Blip2, instruct-blip, qwen-vl 等模型使用的跨模态架构。这是一个单独的模块，用于在预训练的图像 encoder 和 llm 之间对齐。
+
+![](/static/images/lvlm-architecture/Pasted-image-20260424115500.png)
+
+Q-former 的输入是：
+- 一组（32 个）固定的可学习查询向量
+- 输入的指令
+
+输出是：
+- 由输入指令决定的一组固定长度（也是 32）的图像特征
+
+![](/static/images/lvlm-architecture/Pasted-image-20260424105303.png)
+
+Q-former 的内部由两个 transformer 模块组成，主线是 query 向量：
+- 与图像编码器计算跨模态注意力 `cross-attention` 的图像 transformer
+- 与文本输入共享 `self-attention` 的文本 transformer，这里的注意力是双向的
+
+也就是说，信息流是
+
+![](/static/images/lvlm-architecture/Pasted-image-20260424115635.png)
+
+这就让 Q-former 可以根据指令去选择最合适的图像特征，得到一组固定长度的向量去表示指令关注的图像信息，从而理解图像。不过，由于每个 LLM 的 hiddendim 不同，最后还是要接一层 MLP。
+
+和后面的 MLP 不同，推理时，Q-former 不会把图像特征和文本特征拼接起来，而是每一步计算文本向量和图像向量的 crossattention，去融合信息。
+
+Q-former 的训练：
+![](/static/images/lvlm-architecture/Pasted-image-20260424111619.png)
+
+> 总结：先压缩，再对齐
+### MLP
+Q-former 的理念是把图像特征压缩，只保留当前最想要的。那么就一定会存在信息的损失。一个更主流的架构是保留全部图像特征，用一层MLP 直接对齐到 LLM 的空间。
+
+![](/static/images/lvlm-architecture/Pasted-image-20260424112034.png)
+
+
+LLaVA，Qwen2-VL, Qwen2.5-VL 就使用了 MLP。
+
+> 总结：先对齐，剩下的交给 LLM 自己选择
+
+### 对比
+- Q-former 的图像语义更加稀疏，因为他通过 crossattention 从图像里抽取信息，信息可能会损失。而 MLP 把整个图像向量表示通过 MLP 完全输入模型，信息更加完整。
+- Q-former 更省显存，但是训练也更加困难，依赖一些超参数。
+- MLP 更简洁，好收敛，所以更多模型选择 MLP
+
+## 总结
+- 这些两个结构还都只是输入的时候生成一个图像特征，拼接到指令后面，有没有可能可以让模型输出的时候动态选择读哪些图像特征，比如每一步计算一个 qformer
+- 有说法说 gpt 采用了统一的建模，也就是文本和图像一开始就在统一的空间训练，不需要对齐，这就让模型结构更加地自由且合理了，就像人类一样，文本和图像其实都是理解世界的一个单元。
+
