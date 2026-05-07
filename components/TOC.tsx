@@ -14,7 +14,7 @@ export default function TOC({ toc }: { toc?: TocItem[] }) {
       <div className="sticky top-24">
         <nav aria-label="目录" className="border-primary-100/90 border-l pl-6 dark:border-gray-800">
           <div className="mb-4">
-            <h3 className="text-primary-700 dark:text-primary-200 text-[11px] font-semibold tracking-[0.2em] uppercase">
+            <h3 className="text-primary-700 dark:text-primary-200 text-[11px] font-medium">
               On This Page
             </h3>
           </div>

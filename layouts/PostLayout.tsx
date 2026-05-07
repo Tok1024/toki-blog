@@ -33,21 +33,19 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
   return (
     <SectionContainer>
       <ScrollTopAndComment />
-      <article className="mx-auto max-w-[1040px]">
-        <div className="grid gap-12 lg:grid-cols-[minmax(0,700px)_180px] lg:gap-14">
-          <div className="space-y-10">
+      <article className="mx-auto max-w-[980px]">
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,680px)_160px] lg:gap-12">
+          <div className="space-y-9">
             <header className="border-primary-100/90 border-b pb-10 dark:border-gray-800">
-              <div className="dark:text-primary-200 flex flex-wrap items-center gap-3 text-sm text-gray-500">
-                <span className="border-primary-200 bg-primary-50 text-primary-700 dark:border-primary-900/60 dark:bg-primary-900/30 dark:text-primary-200 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[10px] font-semibold tracking-[0.16em] uppercase">
+              <div className="dark:text-primary-200 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-gray-500">
+                <span className="border-primary-200 bg-primary-50 text-primary-700 dark:border-primary-900/60 dark:bg-primary-900/20 dark:text-primary-200 inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-medium">
                   Published
                 </span>
-                <time dateTime={date} className="font-medium">
-                  {formatDate(date, siteMetadata.locale)}
-                </time>
+                <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
                 <span className="hidden h-1 w-1 rounded-full bg-gray-300 sm:inline-block dark:bg-gray-600" />
                 <Link
                   href={`/${basePath}`}
-                  className="text-primary-700 hover:text-primary-800 dark:text-primary-200 dark:hover:text-primary-100 inline-flex items-center gap-1 font-semibold transition"
+                  className="text-primary-700 hover:text-primary-800 dark:text-primary-200 dark:hover:text-primary-100 inline-flex items-center gap-1 font-medium transition"
                   aria-label="Back to the blog"
                 >
                   返回列表 ↗
@@ -59,7 +57,7 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
                   编辑此页
                 </Link>
               </div>
-              <div className="mt-6 space-y-5">
+              <div className="mt-5 space-y-4">
                 <PageTitle>{title}</PageTitle>
                 {primaryAuthor && (
                   <div className="dark:text-primary-100 flex flex-wrap items-center gap-3 text-sm text-gray-500">
@@ -73,7 +71,7 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
                       />
                     )}
                     <div className="leading-tight">
-                      <p className="font-semibold text-gray-900 dark:text-gray-50">
+                      <p className="font-medium text-gray-900 dark:text-gray-50">
                         {primaryAuthor.name}
                       </p>
                       {primaryAuthor.occupation && (
@@ -101,28 +99,28 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
             </div>
 
             {(next || prev) && (
-              <div className="border-primary-100/90 grid gap-4 border-t pt-8 md:grid-cols-2 dark:border-gray-800">
+              <div className="border-primary-100/90 grid gap-3 border-t pt-7 md:grid-cols-2 dark:border-gray-800">
                 {prev && prev.path && (
-                  <div className="border-primary-100/70 rounded-2xl border p-4 transition dark:border-gray-800">
-                    <p className="text-primary-700 dark:text-primary-200 text-[11px] font-semibold tracking-[0.16em] uppercase">
+                  <div className="border-primary-100/50 rounded-xl border p-4 transition dark:border-gray-800">
+                    <p className="text-primary-700 dark:text-primary-200 text-[11px] font-medium">
                       Previous
                     </p>
                     <Link
                       href={`/${prev.path}`}
-                      className="hover:text-primary-700 dark:text-primary-200 dark:hover:text-primary-100 mt-2 block text-lg font-semibold text-gray-900 transition"
+                      className="hover:text-primary-700 dark:text-primary-200 dark:hover:text-primary-100 mt-2 block text-[1.02rem] font-medium text-gray-900 transition"
                     >
                       {prev.title}
                     </Link>
                   </div>
                 )}
                 {next && next.path && (
-                  <div className="border-primary-100/70 rounded-2xl border p-4 transition dark:border-gray-800">
-                    <p className="text-primary-700 dark:text-primary-200 text-[11px] font-semibold tracking-[0.16em] uppercase">
+                  <div className="border-primary-100/50 rounded-xl border p-4 transition dark:border-gray-800">
+                    <p className="text-primary-700 dark:text-primary-200 text-[11px] font-medium">
                       Next
                     </p>
                     <Link
                       href={`/${next.path}`}
-                      className="hover:text-primary-700 dark:text-primary-200 dark:hover:text-primary-100 mt-2 block text-lg font-semibold text-gray-900 transition"
+                      className="hover:text-primary-700 dark:text-primary-200 dark:hover:text-primary-100 mt-2 block text-[1.02rem] font-medium text-gray-900 transition"
                     >
                       {next.title}
                     </Link>

@@ -87,11 +87,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000" />
       <link rel="alternate" type="application/rss+xml" href={`${basePath}/feed.xml`} />
       <body
-        className="relative min-h-screen overflow-x-hidden bg-[#f7fafe] pl-[calc(100vw-100%)] tracking-wide text-gray-900 antialiased dark:bg-gray-950 dark:text-white"
+        className="relative min-h-screen overflow-x-hidden bg-[#f8fafc] pl-[calc(100vw-100%)] text-gray-900 antialiased dark:bg-gray-950 dark:text-white"
         style={{
           fontFamily:
-            '"OPPO Sans 4.0", "OPPO Sans", "HarmonyOS Sans", -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif',
-          letterSpacing: '0.025em',
+            '"PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Microsoft YaHei", "Source Han Sans SC", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif',
         }}
       >
         <ThemeProviders>

@@ -50,13 +50,13 @@ export default function Home({ posts }: HomeProps) {
   ]
 
   return (
-    <div className="space-y-12 sm:space-y-16">
+    <div className="space-y-10 sm:space-y-14">
       <HeroCard posts={posts} />
 
       <section className="space-y-10">
         {topTags.length > 0 && (
           <div className="dark:text-primary-100 flex flex-wrap items-center gap-3 text-sm text-gray-600">
-            <span className="text-primary-700 dark:text-primary-300 text-xs font-semibold tracking-[0.16em] uppercase">
+            <span className="text-primary-700 dark:text-primary-300 text-xs font-medium">
               常用标签
             </span>
             <div className="flex flex-wrap gap-2">
@@ -67,22 +67,22 @@ export default function Home({ posts }: HomeProps) {
           </div>
         )}
 
-        <div className="space-y-14">
+        <div className="space-y-12">
           {sections.map((section) => (
-            <section key={section.key} className="space-y-6">
+            <section key={section.key} className="space-y-5">
               <div className="border-primary-100/90 border-b pb-4 dark:border-gray-800">
                 <div className="flex items-end justify-between gap-4">
                   <div className="space-y-2">
-                    <h3 className="text-2xl font-semibold tracking-[-0.03em] text-gray-950 dark:text-gray-100">
+                    <h3 className="text-[1.55rem] font-medium tracking-[-0.03em] text-gray-950 dark:text-gray-100">
                       {section.title}
                     </h3>
-                    <p className="max-w-2xl text-sm leading-7 text-gray-600 dark:text-gray-300">
+                    <p className="max-w-2xl text-[0.95rem] leading-7 text-gray-600 dark:text-gray-300">
                       {section.blurb}
                     </p>
                   </div>
                   <Link
                     href={section.href}
-                    className="text-primary-700 hover:text-primary-800 dark:text-primary-200 dark:hover:text-primary-100 text-sm font-semibold tracking-[0.08em] uppercase"
+                    className="text-primary-700 hover:text-primary-800 dark:text-primary-200 dark:hover:text-primary-100 text-sm font-medium"
                   >
                     More
                   </Link>
@@ -98,23 +98,23 @@ export default function Home({ posts }: HomeProps) {
                   return (
                     <article
                       key={`${section.key}-${slug}`}
-                      className="group grid gap-4 py-6 md:grid-cols-[96px_minmax(0,1fr)] md:gap-8"
+                      className="group grid gap-4 py-5 md:grid-cols-[84px_minmax(0,1fr)] md:gap-7"
                     >
                       <div className="pt-1">
                         <time
-                          className="block text-sm font-medium tracking-[0.02em] text-gray-500 dark:text-gray-400"
+                          className="block text-sm text-gray-500 dark:text-gray-400"
                           dateTime={date}
                         >
                           {formatDate(date, siteMetadata.locale)}
                         </time>
                       </div>
                       <div className="space-y-3">
-                        <h4 className="group-hover:text-primary-700 dark:text-primary-50 dark:group-hover:text-primary-200 text-[1.35rem] leading-[1.5] font-semibold tracking-[-0.03em] text-gray-950 transition">
+                        <h4 className="group-hover:text-primary-700 dark:text-primary-50 dark:group-hover:text-primary-200 text-[1.18rem] leading-[1.45] font-medium tracking-[-0.02em] text-gray-950 transition">
                           <Link href={`/blog/${slug}`} className="block">
                             {title}
                           </Link>
                         </h4>
-                        <p className="max-w-2xl text-[0.98rem] leading-8 text-gray-600 dark:text-gray-300">
+                        <p className="max-w-2xl text-[0.95rem] leading-7 text-gray-600 dark:text-gray-300">
                           {summary}
                         </p>
                         <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
@@ -125,7 +125,7 @@ export default function Home({ posts }: HomeProps) {
                           </div>
                           <Link
                             href={`/blog/${slug}`}
-                            className="text-primary-700 hover:text-primary-800 dark:text-primary-200 dark:hover:text-primary-100 text-sm font-semibold tracking-[0.08em] uppercase"
+                            className="text-primary-700 hover:text-primary-800 dark:text-primary-200 dark:hover:text-primary-100 text-sm font-medium"
                           >
                             Read →
                           </Link>
@@ -144,7 +144,7 @@ export default function Home({ posts }: HomeProps) {
         <div className="flex justify-end">
           <Link
             href="/blog"
-            className="border-primary-200 text-primary-800 hover:border-primary-300 hover:bg-primary-50 dark:text-primary-100 inline-flex items-center gap-2 rounded-full border bg-white px-6 py-3 text-sm font-semibold transition dark:border-gray-700 dark:bg-gray-900 dark:hover:border-gray-600 dark:hover:bg-gray-800"
+            className="border-primary-200 text-primary-800 hover:border-primary-300 hover:bg-primary-50 dark:text-primary-100 inline-flex items-center gap-2 rounded-full border bg-white px-6 py-3 text-sm font-medium transition dark:border-gray-700 dark:bg-gray-900 dark:hover:border-gray-600 dark:hover:bg-gray-800"
             aria-label="All posts"
           >
             All Posts
