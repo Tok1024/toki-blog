@@ -8,7 +8,7 @@
   "github": 1,
   "学习": 1,
   "成长": 1,
-  "ai": 1,
+  "ai": 2,
   "vibecoding": 1,
   "data-structure": 1,
   "database": 1,
@@ -24,5 +24,8 @@
   "lvlm": 1,
   "多模态": 1,
   "test": 1,
+  "notevibecoding": 1,
+  "cursor": 1,
+  "codex": 1,
   "nextjs": 1
 }

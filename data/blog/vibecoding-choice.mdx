@@ -1,0 +1,135 @@
+---
+title: '穷鬼的 Vibecoding 日常'
+date: 2026-05-07
+lastmod: 2026-05-07
+section: study
+tags: [note，vibecoding,ai,cursor,codex]
+summary: '穷鬼也要玩vibecoding'
+images: []
+draft: false
+authors: ['default']
+layout: PostLayout
+canonicalUrl: ''
+---
+
+## **穷鬼的 Vibecoding 日常：中转 vs codex**
+
+### 方案 1: cursor + 中转
+
+昨天了解到了一个很棒的免费项目 [Cursor 助手](https://dcne38qm5vlg.feishu.cn/wiki/JeP7wdGnziBXuikNaF5czWbrn8c)，可以给 cursor 接入第三方 api，那接入中转用各种新模型不是爽飞了吗？于是研究了一下就配置好用了一晚上，结果一看账单 50M token。
+
+![](/static/images/vibecoding-choice/Pasted-image-20260507152104.png)
+
+算下来花了不到 10 块钱吧，毕竟中转比较便宜。GPT-5.4 打底，Claude 随便点缀几下。爽是爽，但还是有点小贵啊，这才一晚上就花了这么多 token，50m 也就是体感三四个上下文窗口？感觉也不多呀，还没我用 codex 时候用量大。
+
+### 方案 2: 日抛 codex
+
+那为啥不去买日抛的 codex 账号，小飞机上到处都是。日抛价格 5-20r 都有，刚买了一个质保三天，16r
+![](/static/images/vibecoding-choice/Pasted-image-20260507152328.png)
+
+Codex 主要是有一个 5h7d 的用量限制，但是跟价格比起来真的很足。
+![](/static/images/vibecoding-choice/Pasted-image-20260507152820.png)
+
+而且这种烧 token 的方式跟中转不一样，中转有一种**烧的 token 都是自己的钱**的感觉，会心疼。而 codex 则是：**我已经付过钱了，不烧白不烧**，有这样的一种爽感。
+
+### 折中方案：分任务路由
+
+后来我琢磨了半天，发现问题不在工具多贵，而在于**我以前不会分任务**。全扔一个工具里用，日常学习的时候它太强，爆肝的时候又太烧钱。直到我把活儿拆开——日常普通写作业、古法编程、慢慢学就用中转 Cursor；真正要突击大工程、肝实验就直接上 Codex 日抛；研究、查资料、搭框架的时候再切 Grok 网页端——才发现，原来穷鬼也能把 Vibecoding 玩得这么舒服。
+
+
+### 为啥要分任务
+
+AI 编程这玩意儿，本质是工具，不是万能神。  
+日常我写作业、改 bug、边敲边学的时候，其实**就想自己有点参与感**。模型太聪明反而没意思，我还想自己动手改改、试试错、慢慢 vibe 上去。这时候要是用那种固定额度的大号，感觉像拿大炮打蚊子，浪费。  
+但真到 deadline 前一天、要跑很多实验，写论文，我就想让模型直接给我干到飞起，质量拉满，上下文 200k 随便扔，用多少赚多少，号没了就没了，无所谓。
+
+这么一拆，钱花得更值，体验也更爽。
+
+### 三个主力工具，我怎么选
+
+**1. 中转 Cursor**
+有了 Cursor 助手，cursor+中转 现在变成了我现在**写作业、练手、问问题**的首选。  
+**优点：** **按量计费，用多少花多少**。中转想搀屎就搀，反正是自己学习，效果差点也无所谓。
+**缺点**：延迟偶尔有一点，Claude 贵一点就少用。但日常够了，无所谓。不知道会不会被 cursor 官方 gank，但是我还是永远相信有开源的大神。
+
+**2. Codex 日抛**  
+需要**真·干大事**的时候，我直接小飞机买日抛，5-10 块钱一天。  
+登录就干，GPT/ Codex 原生体验，速度快、质量高、长上下文随便甩。直接用 codex 的 mac app 或者 vscode 的 codex 插件。一天一个号，干到封号为止，号没了换下一个，质保卖家也多。Github 上有一个项目叫作 codex-switcher，可以管理多账户的 codex，更好用了。
+
+![](/static/images/vibecoding-choice/Pasted-image-20260507153641.png)
+
+感觉就是：**用多少赚多少**。昨天要是用日抛，估计一个号就能把昨天那活儿干完。心理负担为零，爽感直接爆棚。
+
+**3. Grok 网页端**  
+
+是不是有人说 gemini 是美国大号豆包，我也有这种感觉，最近从 gemini/gpt 的网页端转到 grok 了，感觉很好用。
+用下来觉得，Grok 网页端的搜索功能特别好用。实时网页 + 搜论文 + 工具调用，有啥问题直接问它就行，不用自己切浏览器狂搜。  
+
+Supergrok 目前的小飞机价格在 30-40r 左右，质保 10 天左右，还是非常爽的。
+
+### 关于 token 用量的直觉
+
+既然开始买 token 了，那么要建立起一些关于 token 的直觉，首先我们说的 token 分为以下四种：
+
+|类型|你可以理解成|贵不贵|真实感觉|
+|---|---|---|---|
+|Input|你喂给 AI 的内容|中等|“门票钱”|
+|Output|AI 回给你的内容|最贵|“真正烧钱”|
+|Cache Creation|第一次缓存上下文|小贵|“预存档”|
+|Cache Read|复用之前上下文|极便宜|“白嫖区”|
+
+> 区分 kv-cache 和这里的 cache read：
+
+1. KV Cache 是**大模型一次推理时，内部的中间结果缓存**：模型处理完 prompt 后，会在每一层保存对应 token 的 Key/Value 向量，后续生成新 token 时直接复用这些历史 K/V，而不用反复重算前文。因此，传统意义上的 KV Cache 主要用于**单次请求内部**，加速同一条序列的连续生成。
+
+2. 跨请求的 cache read / prompt cache / prefix cache，可以理解为服务商把已经算好的“前缀 KV Cache”保存下来，后续请求如果有相同前缀，就直接复用。例如很多请求都以同一段 system prompt 开头：
+
+```text
+请求 1：system prompt + 用户问题 A
+请求 2：system prompt + 用户问题 B
+```
+
+如果 `system prompt` 完全一致，请求 2 就可以直接读取请求 1 中这段 system prompt 对应的 KV Cache，而不用重新计算；这部分被复用的 token 就是 **cache read / cache hit**。本质上，它是把 KV Cache 从“单次推理内复用”扩展到了“跨请求复用”。
+
+重要的是：
+
+> Output > Input >>> Cache Read
+
+以我昨天用量为例：
+![](/static/images/vibecoding-choice/Pasted-image-20260507154758.png)
+
+![](/static/images/vibecoding-choice/Pasted-image-20260507155031.png)
+
+Cache hit rate 接近 100%, 大部分 token 都是 cache read。因为 cursor 调用机制还是比较合理优化的，当然也可能是这个中转站统计口径有问题，一般就 80%多就很好了。
+
+一个比较合理的问题是：一个上下文窗口不就是 200k 左右么，为啥我用一次上下文窗口消耗了 10m？
+
+问题在于，**你每次提问，都要把目前为止所有的上下文打包发给 ai**，所以上下文长度限制的是单次的最长输入，而你消耗的 token 是每一次的累加，所以一个 200k 的上下文，总共消耗几 m 都是合理的。
+
+### 总结
+
+AI 编程工具现在这么多，没必要死磕一个。**穷鬼的 Vibecoding，核心就是按任务分流**——该省的时候省，该爽的时候就别心疼那点钱。
+
+好用的工具（欢迎补充）：
+- Codex mac app
+- Cursor+cursor 助手
+- Telegram
+- Codex 的 vscode 插件，可以 ssh 到服务器上运行 -> [b 站教程](https://www.bilibili.com/video/BV14joABbEtN/?spm_id_from=333.337.search-card.all.click&vd_source=9d2e08bb05fad67066658154c2ab97cc)
+- [Codex-switcher](https://github.com/Lampese/codex-switcher): codex 多账号统一监控，切换
+
+不得不感慨，我作为一个普通大学生，真是在本科的几年，见证了一个时代的改变！以前程序员讨论的是：
+- Vim 还是 VSCode
+- Python 还是 Rust
+- Tabs 还是 Spaces
+
+现在开始变成：
+- Claude 还是 GPT
+- Cache hit 高不高
+- Agent 会不会发疯
+
+现在学校的软件工程课也开始讲 vibecoding，harness engineer 之类的，老师也说现在还不会 vibecoding 就等死吧（大概是这个意思）。有时候想想还挺魔幻的。作为普通人只能适应了。
+
+总之这就是我对最近 vibecoding 探索的记录，未来可能会继续探索
+- Claudecode+第三方中转
+- 各种 cli 工具（有点丑我不喜欢）
+- 等 Cursor 助手更新，这玩意真挺好用的。
