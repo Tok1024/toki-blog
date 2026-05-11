@@ -23,9 +23,22 @@ Options:
   --section <name>     study | life (default: study)
   --slug <slug>        output blog slug
   --title <title>      output blog title
+  --tags <t1,t2>       comma-separated tags (merged with Obsidian frontmatter tags)
+  --summary <text>     custom summary (auto-extracted if omitted)
   --draft              create as draft
   --overwrite          overwrite existing output file
+  --dry-run            preview output without writing
   --help               show help
+
+Transforms applied:
+  - Obsidian image embeds ![[img]] → standard markdown images
+  - Local markdown images → copied to public/static/images/<slug>/
+  - Wiki-links [[page]] and [[page|alias]] → plain text or links
+  - Obsidian callouts > [!TYPE] → remark-github-blockquote-alert format
+  - Obsidian highlights ==text== → <mark>text</mark>
+  - Obsidian comments %%...%% → removed
+  - Bare #tags in content → removed (use frontmatter tags instead)
+  - Preserves existing Obsidian frontmatter (tags, summary, etc.)
 `)
 }
 
@@ -121,8 +134,12 @@ function extractSummary(content) {
     .filter(Boolean)
     .filter((line) => !line.startsWith('#'))
     .filter((line) => !line.startsWith('![') && !line.startsWith('![['))
+    .filter((line) => !line.startsWith('> [!'))
+    .filter((line) => !line.startsWith('```'))
+    .filter((line) => !line.startsWith('%%'))
+    .filter((line) => !line.startsWith('---'))
   const summary = lines.find((line) => line.length > 12) || '从 Obsidian 导入的笔记。'
-  return summary.slice(0, 120)
+  return summary.replace(/[*_~`=]/g, '').slice(0, 120)
 }
 
 async function resolveAttachment(noteDir, vaultRoot, rawTarget) {
@@ -160,46 +177,169 @@ async function copyAttachment(sourcePath, slug) {
   return `/static/images/${encodeURIComponent(slug)}/${encodeURIComponent(fileName)}`
 }
 
+// --- Obsidian-specific transforms ---
+
+function convertWikiLinks(content) {
+  // [[page|alias]] → alias
+  // [[page]] → page (just the display name)
+  return content.replace(/\[\[([^\]]+)\]\]/g, (match, inner) => {
+    const parts = inner.split('|')
+    const display = parts.length > 1 ? parts[1].trim() : parts[0].trim()
+    // Strip any path prefix, keep just the note name
+    const cleaned = display.replace(/^.*\//, '')
+    return cleaned
+  })
+}
+
+function convertHighlights(content) {
+  // ==highlighted text== → <mark>highlighted text</mark>
+  return content.replace(/==([^=]+)==/g, '<mark>$1</mark>')
+}
+
+function removeObsidianComments(content) {
+  // %%block comments%% (can span multiple lines)
+  let result = content.replace(/%%[\s\S]*?%%/g, '')
+  return result
+}
+
+function removeBareHashtags(content) {
+  // Remove #tag patterns that aren't headings (line doesn't start with #)
+  // Be careful not to remove # in code blocks or headings
+  const lines = content.split('\n')
+  let inCodeBlock = false
+  const processed = lines.map((line) => {
+    if (line.trim().startsWith('```')) {
+      inCodeBlock = !inCodeBlock
+      return line
+    }
+    if (inCodeBlock) return line
+    // Don't touch heading lines
+    if (/^\s*#{1,6}\s/.test(line)) return line
+    // Remove standalone #tags (word boundary before #, letters/digits/- after)
+    return line.replace(/(?<=\s|^)#([a-zA-Z\u4e00-\u9fa5][a-zA-Z0-9\u4e00-\u9fa5_/-]*)/g, '$1')
+  })
+  return processed.join('\n')
+}
+
+function normalizeCallouts(content) {
+  // Obsidian callouts use > [!TYPE] which is already the remark-github-blockquote-alert format
+  // But Obsidian also supports > [!TYPE]- (foldable) and > [!TYPE]+ (default open)
+  // Normalize these to just > [!TYPE]
+  return content.replace(/^(>\s*\[![A-Z]+\])[+-]\s*/gm, '$1 ')
+}
+
+function normalizeBlankLines(content) {
+  // Collapse 3+ consecutive blank lines into 2
+  return content.replace(/\n{4,}/g, '\n\n\n')
+}
+
 async function transformContent(content, noteDir, vaultRoot, slug) {
   let output = content
 
-  const obsidianEmbeds = [...content.matchAll(/!\[\[([^\]]+)\]\]/g)]
+  // 1. Remove Obsidian comments first (before other transforms see them)
+  output = removeObsidianComments(output)
+
+  // 2. Handle Obsidian image embeds: ![[image.png]] or ![[image.png|400]]
+  const obsidianEmbeds = [...output.matchAll(/!\[\[([^\]]+)\]\]/g)]
   for (const match of obsidianEmbeds) {
-    const source = await resolveAttachment(noteDir, vaultRoot, match[1])
-    if (!source) continue
-    const publicPath = await copyAttachment(source, slug)
-    output = output.replace(match[0], `![](${publicPath})`)
+    const raw = match[1]
+    const target = raw.split('|')[0].trim()
+    // Check if it's an image (common extensions)
+    if (/\.(png|jpe?g|gif|svg|webp|bmp|ico)$/i.test(target)) {
+      const source = await resolveAttachment(noteDir, vaultRoot, target)
+      if (source) {
+        const publicPath = await copyAttachment(source, slug)
+        output = output.replace(match[0], `![](${publicPath})`)
+      } else {
+        console.warn(`  Warning: Could not find image: ${target}`)
+      }
+    } else {
+      // Non-image embed (e.g. ![[other-note]]) → convert to text reference
+      const display = raw.split('|').pop().trim().replace(/^.*\//, '')
+      output = output.replace(match[0], `*See: ${display}*`)
+    }
   }
 
+  // 3. Handle local markdown images (non-URL, non-already-processed)
   const markdownImages = [...output.matchAll(/!\[([^\]]*)\]\((?!https?:\/\/|\/static\/)([^)]+)\)/g)]
   for (const match of markdownImages) {
-    const source = await resolveAttachment(noteDir, vaultRoot, match[2])
-    if (!source) continue
-    const publicPath = await copyAttachment(source, slug)
-    output = output.replace(match[0], `![${match[1]}](${publicPath})`)
+    const imgPath = decodeURIComponent(match[2])
+    const source = await resolveAttachment(noteDir, vaultRoot, imgPath)
+    if (source) {
+      const publicPath = await copyAttachment(source, slug)
+      output = output.replace(match[0], `![${match[1]}](${publicPath})`)
+    } else {
+      console.warn(`  Warning: Could not find image: ${imgPath}`)
+    }
   }
+
+  // 4. Convert remaining wiki-links to plain text
+  output = convertWikiLinks(output)
+
+  // 5. Convert Obsidian highlights
+  output = convertHighlights(output)
+
+  // 6. Normalize callout foldable syntax
+  output = normalizeCallouts(output)
+
+  // 7. Remove bare #tags from content
+  output = removeBareHashtags(output)
+
+  // 8. Normalize excessive blank lines
+  output = normalizeBlankLines(output)
 
   return output
 }
 
+function mergeTags(obsidianTags, cliTags) {
+  const all = new Set()
+  // Obsidian frontmatter tags
+  if (Array.isArray(obsidianTags)) {
+    obsidianTags.forEach((t) => all.add(String(t).toLowerCase().trim()))
+  } else if (typeof obsidianTags === 'string') {
+    obsidianTags.split(',').forEach((t) => {
+      const cleaned = t.trim().replace(/^#/, '').toLowerCase()
+      if (cleaned) all.add(cleaned)
+    })
+  }
+  // CLI --tags
+  if (cliTags) {
+    cliTags.split(',').forEach((t) => {
+      const cleaned = t.trim().toLowerCase()
+      if (cleaned) all.add(cleaned)
+    })
+  }
+  // Always include 'note' if empty
+  if (all.size === 0) all.add('note')
+  return [...all]
+}
+
 function parseArgs(argv) {
-  const args = { query: '', section: 'study', draft: false, overwrite: false }
+  const args = { query: '', section: 'study', draft: false, overwrite: false, dryRun: false }
   for (let i = 0; i < argv.length; i += 1) {
     const token = argv[i]
-    if (token === '--vault') args.vault = argv[++i]
-    else if (token === '-v') args.vault = argv[++i]
-    else if (token === '--section') args.section = argv[++i]
-    else if (token === '-s') args.section = argv[++i]
+    if (token === '--vault' || token === '-v') args.vault = argv[++i]
+    else if (token === '--section' || token === '-s') args.section = argv[++i]
     else if (token === '--slug') args.slug = argv[++i]
     else if (token === '--title') args.title = argv[++i]
+    else if (token === '--tags' || token === '-t') args.tags = argv[++i]
+    else if (token === '--summary') args.summary = argv[++i]
     else if (token === '--draft') args.draft = true
     else if (token === '--overwrite') args.overwrite = true
+    else if (token === '--dry-run') args.dryRun = true
     else if (token === '--help' || token === '-h') args.help = true
     else if (!args.query && !token.startsWith('-')) {
       args.query = token
     } else throw new Error(`Unknown argument: ${token}`)
   }
   return args
+}
+
+function escapeYamlString(str) {
+  if (/[:'"\n]/.test(str)) {
+    return `"${str.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
+  }
+  return `'${str}'`
 }
 
 async function main() {
@@ -238,9 +378,12 @@ async function main() {
   const slug = args.slug || slugify(path.basename(sourceFile, path.extname(sourceFile)))
   const outputFile = path.join(BLOG_DATA_DIR, `${slug}.mdx`)
 
-  if (!args.overwrite && (await exists(outputFile))) {
+  if (!args.overwrite && !args.dryRun && (await exists(outputFile))) {
     throw new Error(`Output already exists: ${outputFile}. Use --overwrite to replace it.`)
   }
+
+  console.log(`Source: ${path.relative(vaultRoot, sourceFile)}`)
+  console.log(`Slug:   ${slug}`)
 
   const transformed = await transformContent(
     parsed.content,
@@ -248,15 +391,20 @@ async function main() {
     vaultRoot,
     slug
   )
-  const summary = extractSummary(transformed)
-  const date = today()
+
+  // Merge tags from Obsidian frontmatter and CLI
+  const tags = mergeTags(parsed.data.tags, args.tags)
+  const summary =
+    args.summary || parsed.data.summary || parsed.data.description || extractSummary(transformed)
+  const date = parsed.data.date ? new Date(parsed.data.date).toISOString().slice(0, 10) : today()
+
   const frontmatter = `---
-title: '${sourceTitle.replace(/'/g, "\\'")}'
+title: ${escapeYamlString(sourceTitle)}
 date: ${date}
-lastmod: ${date}
+lastmod: ${today()}
 section: ${args.section}
-tags: [note]
-summary: '${summary.replace(/'/g, "\\'")}'
+tags: [${tags.join(', ')}]
+summary: ${escapeYamlString(summary)}
 images: []
 draft: ${args.draft ? 'true' : 'false'}
 authors: ['default']
@@ -266,12 +414,27 @@ canonicalUrl: ''
 
 `
 
-  await fs.mkdir(BLOG_DATA_DIR, { recursive: true })
-  await fs.writeFile(outputFile, frontmatter + transformed.trimStart() + '\n', 'utf8')
+  const finalContent = frontmatter + transformed.trimStart() + '\n'
 
-  console.log(`Imported: ${path.relative(vaultRoot, sourceFile)}`)
+  if (args.dryRun) {
+    console.log('\n--- DRY RUN (preview) ---\n')
+    // Show first 60 lines
+    const previewLines = finalContent.split('\n').slice(0, 60)
+    console.log(previewLines.join('\n'))
+    if (finalContent.split('\n').length > 60) {
+      console.log(`\n... (${finalContent.split('\n').length - 60} more lines)`)
+    }
+    console.log('\n--- END DRY RUN ---')
+    return
+  }
+
+  await fs.mkdir(BLOG_DATA_DIR, { recursive: true })
+  await fs.writeFile(outputFile, finalContent, 'utf8')
+
   console.log(`Output: ${path.relative(BLOG_ROOT, outputFile)}`)
   console.log(`Section: ${args.section}`)
+  console.log(`Tags: ${tags.join(', ')}`)
+  console.log(`Summary: ${summary.slice(0, 60)}...`)
 }
 
 main().catch((error) => {

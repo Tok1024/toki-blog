@@ -1,6 +1,7 @@
 import { ReactNode } from 'react'
-import { CoreContent } from 'pliny/utils/contentlayer'
+import { CoreContent, allCoreContent, sortPosts } from 'pliny/utils/contentlayer'
 import type { Blog, Authors } from 'contentlayer/generated'
+import { allBlogs } from 'contentlayer/generated'
 import Comments from '@/components/Comments'
 import Link from '@/components/Link'
 import PageTitle from '@/components/PageTitle'
@@ -9,6 +10,8 @@ import Image from '@/components/Image'
 import Tag from '@/components/Tag'
 import siteMetadata from '@/data/siteMetadata'
 import ScrollTopAndComment from '@/components/ScrollTopAndComment'
+import ReadingProgress from '@/components/ReadingProgress'
+import RelatedPosts from '@/components/RelatedPosts'
 import TOC from '@/components/TOC'
 import { formatDate } from 'pliny/utils/formatDate'
 
@@ -25,13 +28,15 @@ interface LayoutProps {
 }
 
 export default function PostLayout({ content, authorDetails, next, prev, children }: LayoutProps) {
-  const { filePath, path, slug, date, title, tags } = content
+  const { filePath, path, slug, date, title, tags, readingTime } = content
   const basePath = path.split('/')[0]
   const primaryAuthor = authorDetails?.[0]
   const tocItems = content.toc as unknown as { value: string; url: string; depth: number }[]
+  const allPostsCore = allCoreContent(sortPosts(allBlogs))
 
   return (
     <SectionContainer>
+      <ReadingProgress />
       <ScrollTopAndComment />
       <article className="mx-auto max-w-[980px]">
         <div className="grid gap-10 lg:grid-cols-[minmax(0,680px)_160px] lg:gap-12">
@@ -42,6 +47,11 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
                   Published
                 </span>
                 <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
+                {readingTime && (
+                  <span className="text-gray-400 dark:text-gray-500">
+                    · {Math.ceil(readingTime.minutes)} min read
+                  </span>
+                )}
                 <span className="hidden h-1 w-1 rounded-full bg-gray-300 sm:inline-block dark:bg-gray-600" />
                 <Link
                   href={`/${basePath}`}
@@ -137,6 +147,8 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
                 <Comments slug={slug} />
               </div>
             )}
+
+            <RelatedPosts currentSlug={slug} currentTags={tags || []} allPosts={allPostsCore} />
           </div>
 
           <TOC toc={tocItems} />

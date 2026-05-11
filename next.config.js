@@ -9,11 +9,11 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 const ContentSecurityPolicy = `
   default-src 'self';
   script-src 'self' 'unsafe-eval' 'unsafe-inline' giscus.app giscus.githubapp.com static.cloudflareinsights.com umami.toki.codes cdn.jsdelivr.net;
-  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  style-src 'self' 'unsafe-inline';
   img-src 'self' data: blob: https:;
   media-src 'self' https: data: blob:;
   connect-src 'self' https://static.cloudflareinsights.com https://api.github.com https://umami.toki.codes https://giscus.app https://giscus.githubapp.com https:;
-  font-src 'self' https://fonts.gstatic.com;
+  font-src 'self';
   frame-src giscus.app giscus.githubapp.com;
 `
 

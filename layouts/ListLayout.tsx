@@ -2,12 +2,10 @@
 
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
-import { formatDate } from 'pliny/utils/formatDate'
 import { CoreContent } from 'pliny/utils/contentlayer'
 import type { Blog } from 'contentlayer/generated'
 import Link from '@/components/Link'
-import Tag from '@/components/Tag'
-import siteMetadata from '@/data/siteMetadata'
+import ArticleCard from '@/components/ArticleCard'
 
 interface PaginationProps {
   totalPages: number
@@ -23,9 +21,9 @@ interface ListLayoutProps {
 function Pagination({ totalPages, currentPage }: PaginationProps) {
   const pathname = usePathname()
   const basePath = pathname
-    .replace(/^\//, '') // Remove leading slash
-    .replace(/\/page\/\d+\/?$/, '') // Remove any trailing /page
-    .replace(/\/$/, '') // Remove trailing slash
+    .replace(/^\//, '')
+    .replace(/\/page\/\d+\/?$/, '')
+    .replace(/\/$/, '')
   const prevPage = currentPage - 1 > 0
   const nextPage = currentPage + 1 <= totalPages
 
@@ -75,7 +73,6 @@ export default function ListLayout({
     return searchContent.toLowerCase().includes(searchValue.toLowerCase())
   })
 
-  // If initialDisplayPosts exist, display it if no searchValue is specified
   const displayPosts =
     initialDisplayPosts.length > 0 && !searchValue ? initialDisplayPosts : filteredBlogPosts
 
@@ -83,7 +80,7 @@ export default function ListLayout({
     <>
       <div className="space-y-10">
         <div className="space-y-4 pt-8 pb-10">
-          <h1 className="dark:text-primary-100 text-4xl leading-[1.2] font-semibold tracking-[-0.05em] text-gray-950 sm:text-5xl md:text-6xl">
+          <h1 className="dark:text-primary-100 text-4xl leading-tight font-semibold tracking-tight text-gray-950 sm:text-5xl md:text-6xl">
             {title}
           </h1>
           <div className="relative max-w-lg">
@@ -120,50 +117,9 @@ export default function ListLayout({
               No posts found.
             </div>
           )}
-          {displayPosts.map((post) => {
-            const { path, date, title, summary, tags } = post
-            return (
-              <article
-                key={path}
-                className="group grid gap-5 py-8 md:grid-cols-[120px_minmax(0,1fr)] md:gap-8"
-              >
-                <div className="pt-1">
-                  <time
-                    className="text-sm font-medium tracking-[0.02em] text-gray-500 dark:text-gray-400"
-                    dateTime={date}
-                  >
-                    {formatDate(date, siteMetadata.locale)}
-                  </time>
-                </div>
-
-                <div className="space-y-4">
-                  <h3 className="group-hover:text-primary-700 dark:text-primary-50 dark:group-hover:text-primary-200 text-[1.6rem] leading-[1.45] font-semibold tracking-[-0.03em] text-gray-950 transition">
-                    <Link href={`/${path}`} className="block">
-                      {title}
-                    </Link>
-                  </h3>
-
-                  <p className="max-w-2xl text-[1.02rem] leading-8 text-gray-600 dark:text-gray-300">
-                    {summary}
-                  </p>
-
-                  <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                    <div className="flex flex-wrap gap-2">
-                      {tags?.map((tag) => <Tag key={tag} text={tag} />)}
-                    </div>
-
-                    <Link
-                      href={`/${path}`}
-                      className="text-primary-700 hover:text-primary-800 dark:text-primary-200 dark:hover:text-primary-100 text-sm font-semibold tracking-[0.08em] uppercase"
-                      aria-label={`Read more: "${title}"`}
-                    >
-                      Read &rarr;
-                    </Link>
-                  </div>
-                </div>
-              </article>
-            )
-          })}
+          {displayPosts.map((post) => (
+            <ArticleCard key={post.path} post={post} />
+          ))}
         </div>
       </div>
       {pagination && pagination.totalPages > 1 && !searchValue && (

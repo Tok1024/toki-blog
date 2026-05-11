@@ -5,7 +5,7 @@ import SocialIcon from '@/components/social-icons'
 export default function Footer() {
   return (
     <footer>
-      <div className="mt-16 border-t border-black/6 px-2 py-8 dark:border-white/8">
+      <div className="border-primary-100/90 mt-16 border-t px-2 py-8 dark:border-gray-800">
         <div className="mb-4 flex flex-wrap justify-center gap-x-4 gap-y-3 text-gray-500 dark:text-gray-400">
           <SocialIcon kind="mail" href={`mailto:${siteMetadata.email}`} size={6} />
           <SocialIcon kind="github" href={siteMetadata.github} size={6} />
@@ -19,7 +19,7 @@ export default function Footer() {
           <SocialIcon kind="threads" href={siteMetadata.threads} size={6} />
           <SocialIcon kind="medium" href={siteMetadata.medium} size={6} />
         </div>
-        <div className="mb-1 flex justify-center space-x-2 text-[0.92rem] text-gray-500 dark:text-gray-300">
+        <div className="mb-1 flex justify-center space-x-2 text-sm text-gray-500 dark:text-gray-300">
           <div>{siteMetadata.author}</div>
           <div>{` • `}</div>
           <div>{`© ${new Date().getFullYear()}`}</div>

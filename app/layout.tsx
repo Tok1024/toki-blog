@@ -8,7 +8,10 @@ import { SearchProvider, SearchConfig } from 'pliny/search'
 import Header from '@/components/Header'
 import SectionContainer from '@/components/SectionContainer'
 import Footer from '@/components/Footer'
+import FloatingMusicPlayer from '@/components/FloatingMusicPlayer'
+import { MusicPlayerProvider } from '@/components/MusicPlayerProvider'
 import siteMetadata from '@/data/siteMetadata'
+import { musicPlaylist } from '@/data/musicPlaylist'
 import { ThemeProviders } from './theme-providers'
 import { Metadata } from 'next'
 
@@ -27,7 +30,7 @@ export const metadata: Metadata = {
     url: './',
     siteName: siteMetadata.title,
     images: [siteMetadata.socialBanner],
-    locale: 'en_US',
+    locale: 'zh_CN',
     type: 'website',
   },
   alternates: {
@@ -47,11 +50,11 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
-  // twitter: {
-  //   title: siteMetadata.title,
-  //   card: 'summary_large_image',
-  //   images: [siteMetadata.socialBanner],
-  // },
+  twitter: {
+    title: siteMetadata.title,
+    card: 'summary_large_image',
+    images: [siteMetadata.socialBanner],
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -94,14 +97,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         }}
       >
         <ThemeProviders>
-          <Analytics analyticsConfig={siteMetadata.analytics as AnalyticsConfig} />
-          <SectionContainer>
-            <SearchProvider searchConfig={siteMetadata.search as SearchConfig}>
-              <Header />
-              <main className="mb-auto pt-2 sm:pt-3">{children}</main>
-            </SearchProvider>
-            <Footer />
-          </SectionContainer>
+          <MusicPlayerProvider initialPlaylist={musicPlaylist}>
+            <Analytics analyticsConfig={siteMetadata.analytics as AnalyticsConfig} />
+            <SectionContainer>
+              <SearchProvider searchConfig={siteMetadata.search as SearchConfig}>
+                <Header />
+                <main className="mb-auto pt-2 sm:pt-3">{children}</main>
+              </SearchProvider>
+              <Footer />
+            </SectionContainer>
+            <FloatingMusicPlayer />
+          </MusicPlayerProvider>
         </ThemeProviders>
       </body>
     </html>

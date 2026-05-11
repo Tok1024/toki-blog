@@ -69,13 +69,13 @@ function getCellClassName(level: number, isFuture: boolean) {
 
   switch (level) {
     case 4:
-      return 'border-sky-200 bg-sky-300 dark:border-sky-400/60 dark:bg-sky-300/80'
+      return 'border-primary-400 bg-primary-500 dark:border-primary-300/60 dark:bg-primary-300/80'
     case 3:
-      return 'border-sky-100 bg-sky-200 dark:border-sky-500/60 dark:bg-sky-400/65'
+      return 'border-primary-300 bg-primary-400 dark:border-primary-400/60 dark:bg-primary-400/65'
     case 2:
-      return 'border-primary-200 bg-primary-200 dark:border-primary-500/60 dark:bg-primary-500/55'
+      return 'border-primary-200 bg-primary-300 dark:border-primary-500/60 dark:bg-primary-500/55'
     case 1:
-      return 'border-primary-100 bg-primary-100 dark:border-primary-700/60 dark:bg-primary-800/80'
+      return 'border-primary-100 bg-primary-200 dark:border-primary-700/60 dark:bg-primary-800/80'
     default:
       return 'border-primary-100/80 bg-white dark:border-gray-800 dark:bg-gray-900/70'
   }
@@ -187,49 +187,49 @@ export default function BlogHeatmap({ posts, embedded = false }: BlogHeatmapProp
     <div
       className={
         embedded
-          ? 'space-y-4'
+          ? 'space-y-3'
           : 'border-primary-100/90 rounded-[28px] border bg-white/90 p-5 shadow-[0_18px_45px_-30px_rgba(80,111,144,0.28)] backdrop-blur sm:p-7 dark:border-gray-800 dark:bg-gray-950/80'
       }
     >
       <div
-        className={`flex flex-col gap-4 ${embedded ? '' : 'border-primary-100/90 border-b pb-5 dark:border-gray-800'} sm:flex-row sm:items-end sm:justify-between`}
+        className={`flex flex-col gap-3 ${embedded ? '' : 'border-primary-100/90 border-b pb-5 dark:border-gray-800'} sm:flex-row sm:items-end sm:justify-between`}
       >
-        <h2 className="text-[1.55rem] font-semibold tracking-[-0.03em] text-gray-950 dark:text-gray-100">
+        <h2 className="text-[1.35rem] font-semibold tracking-[-0.03em] text-gray-950 dark:text-gray-100">
           更新热力图
         </h2>
 
-        <div className="grid grid-cols-3 gap-2 text-left sm:max-w-[320px] sm:min-w-0">
-          <div className="border-primary-100 bg-primary-50/80 rounded-[16px] border px-3 py-2.5 dark:border-gray-800 dark:bg-gray-900/80">
-            <p className="text-xs tracking-[0.12em] text-gray-500 uppercase dark:text-gray-400">
+        <div className="grid grid-cols-3 gap-2 text-left sm:max-w-[300px] sm:min-w-0">
+          <div className="border-primary-100 bg-primary-50/80 rounded-xl border px-3 py-2 dark:border-gray-800 dark:bg-gray-900/80">
+            <p className="text-[11px] tracking-[0.12em] text-gray-500 uppercase dark:text-gray-400">
               更新天数
             </p>
-            <p className="mt-1 text-xl font-semibold text-gray-950 dark:text-gray-100">
+            <p className="mt-1 text-lg font-semibold text-gray-950 dark:text-gray-100">
               {allActiveDays}
             </p>
           </div>
-          <div className="border-primary-100 bg-primary-50/80 rounded-[16px] border px-3 py-2.5 dark:border-gray-800 dark:bg-gray-900/80">
-            <p className="text-xs tracking-[0.12em] text-gray-500 uppercase dark:text-gray-400">
+          <div className="border-primary-100 bg-primary-50/80 rounded-xl border px-3 py-2 dark:border-gray-800 dark:bg-gray-900/80">
+            <p className="text-[11px] tracking-[0.12em] text-gray-500 uppercase dark:text-gray-400">
               当前连续
             </p>
-            <p className="mt-1 text-xl font-semibold text-gray-950 dark:text-gray-100">
+            <p className="mt-1 text-lg font-semibold text-gray-950 dark:text-gray-100">
               {currentStreak} 天
             </p>
           </div>
-          <div className="border-primary-100 bg-primary-50/80 rounded-[16px] border px-3 py-2.5 dark:border-gray-800 dark:bg-gray-900/80">
-            <p className="text-xs tracking-[0.12em] text-gray-500 uppercase dark:text-gray-400">
+          <div className="border-primary-100 bg-primary-50/80 rounded-xl border px-3 py-2 dark:border-gray-800 dark:bg-gray-900/80">
+            <p className="text-[11px] tracking-[0.12em] text-gray-500 uppercase dark:text-gray-400">
               最长连续
             </p>
-            <p className="mt-1 text-xl font-semibold text-gray-950 dark:text-gray-100">
+            <p className="mt-1 text-lg font-semibold text-gray-950 dark:text-gray-100">
               {longestStreak} 天
             </p>
           </div>
         </div>
       </div>
 
-      <div className={embedded ? 'overflow-x-auto pb-0.5' : 'mt-6 overflow-x-auto pb-2'}>
+      <div className={embedded ? 'overflow-x-auto' : 'mt-6 overflow-x-auto pb-2'}>
         <div className="min-w-[360px]">
           <div
-            className="mb-3 ml-10 grid h-5 gap-1.5 text-[11px] text-gray-500 dark:text-gray-400"
+            className="mb-2 ml-10 grid h-4 gap-1.5 text-[10px] text-gray-500 dark:text-gray-400"
             style={{ gridTemplateColumns: `repeat(${weekCount}, minmax(0, 1fr))` }}
           >
             {monthMarkers.map((marker) => (
@@ -268,7 +268,7 @@ export default function BlogHeatmap({ posts, embedded = false }: BlogHeatmapProp
                       key={`${week.startDate.toISOString()}-${cell.dateKey}`}
                       title={label}
                       aria-label={label}
-                      className={`h-3.5 rounded-[4px] border transition-transform duration-150 hover:-translate-y-0.5 ${getCellClassName(
+                      className={`h-3.5 rounded-sm border transition-transform duration-150 hover:-translate-y-0.5 ${getCellClassName(
                         cell.level,
                         cell.isFuture
                       )}`}

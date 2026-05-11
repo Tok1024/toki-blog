@@ -50,10 +50,10 @@ export default function Home({ posts }: HomeProps) {
   ]
 
   return (
-    <div className="space-y-10 sm:space-y-14">
+    <div className="space-y-8 sm:space-y-10">
       <HeroCard posts={posts} />
 
-      <section className="space-y-10">
+      <section className="space-y-7 sm:space-y-8">
         {topTags.length > 0 && (
           <div className="dark:text-primary-100 flex flex-wrap items-center gap-3 text-sm text-gray-600">
             <span className="text-primary-700 dark:text-primary-300 text-xs font-medium">
@@ -67,7 +67,7 @@ export default function Home({ posts }: HomeProps) {
           </div>
         )}
 
-        <div className="space-y-12">
+        <div className="space-y-10">
           {sections.map((section) => (
             <section key={section.key} className="space-y-5">
               <div className="border-primary-100/90 border-b pb-4 dark:border-gray-800">
