@@ -86,10 +86,14 @@ export default function FloatingMusicPlayer() {
             <button
               type="button"
               onClick={() => setIsExpanded(!isExpanded)}
-              className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-gray-400 transition hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
               aria-label={isExpanded ? '收起播放列表' : '展开播放列表'}
             >
-              {isExpanded ? <XMarkIcon className="h-4 w-4" /> : <QueueListIcon className="h-4 w-4" />}
+              {isExpanded ? (
+                <XMarkIcon className="h-4 w-4" />
+              ) : (
+                <QueueListIcon className="h-4 w-4" />
+              )}
             </button>
           </div>
 
@@ -101,7 +105,7 @@ export default function FloatingMusicPlayer() {
               step="0.1"
               value={progress}
               onChange={handleSeek}
-              className="bg-gray-200 accent-gray-900 dark:accent-white h-1 w-full cursor-pointer rounded-full dark:bg-gray-800"
+              className="h-1 w-full cursor-pointer rounded-full bg-gray-200 accent-gray-900 dark:bg-gray-800 dark:accent-white"
               aria-label="播放进度"
             />
             <div className="mt-1.5 flex items-center justify-between text-[11px] text-gray-400 dark:text-gray-500">
@@ -114,7 +118,7 @@ export default function FloatingMusicPlayer() {
             <button
               type="button"
               onClick={playPrev}
-              className="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white flex h-9 w-9 items-center justify-center rounded-full transition disabled:opacity-40"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-gray-500 transition hover:text-gray-800 disabled:opacity-40 dark:text-gray-400 dark:hover:text-white"
               disabled={playlist.length <= 1}
               aria-label="上一首"
             >
@@ -123,7 +127,7 @@ export default function FloatingMusicPlayer() {
             <button
               type="button"
               onClick={() => void togglePlay()}
-              className="bg-gray-950 text-white dark:bg-white dark:text-gray-950 flex h-10 w-10 items-center justify-center rounded-full transition"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-950 text-white transition dark:bg-white dark:text-gray-950"
               aria-label={isPlaying ? '暂停' : '播放'}
             >
               {isPlaying ? (
@@ -135,7 +139,7 @@ export default function FloatingMusicPlayer() {
             <button
               type="button"
               onClick={playNext}
-              className="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white flex h-9 w-9 items-center justify-center rounded-full transition disabled:opacity-40"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-gray-500 transition hover:text-gray-800 disabled:opacity-40 dark:text-gray-400 dark:hover:text-white"
               disabled={playlist.length <= 1}
               aria-label="下一首"
             >
@@ -204,7 +208,7 @@ export default function FloatingMusicPlayer() {
                   max="100"
                   value={Math.round(volume * 100)}
                   onChange={handleVolumeChange}
-                  className="bg-gray-200 accent-gray-700 dark:accent-gray-300 h-1 w-full cursor-pointer rounded-full dark:bg-gray-800"
+                  className="h-1 w-full cursor-pointer rounded-full bg-gray-200 accent-gray-700 dark:bg-gray-800 dark:accent-gray-300"
                   aria-label="音量"
                 />
               </div>
